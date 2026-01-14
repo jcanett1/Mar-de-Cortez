@@ -128,7 +128,7 @@ export default function Productos() {
     setEditingProduct(null);
   };
 
-  const filteredProducts = filterCategory
+  const filteredProducts = filterCategory && filterCategory !== 'all'
     ? products.filter(p => p.category === filterCategory)
     : products;
 
