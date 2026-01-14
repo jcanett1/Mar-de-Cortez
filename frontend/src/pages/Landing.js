@@ -62,13 +62,8 @@ export default function Landing() {
             Sistema de e-procurement marino basado en la nube. Gestiona todas tus actividades de compra de manera eficiente y simplificada.
           </p>
           <div className="flex gap-4 justify-center animate-in slide-in-from-bottom-4 duration-700 delay-300">
-            <Link to="/register">
-              <Button size="lg" className="bg-secondary hover:bg-secondary/80 text-secondary-foreground px-8 py-6 text-lg font-semibold shadow-lg" data-testid="get-started-btn">
-                Comenzar Ahora
-              </Button>
-            </Link>
             <Link to="/login">
-              <Button size="lg" variant="outline" className="bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/20 px-8 py-6 text-lg font-semibold" data-testid="login-btn">
+              <Button size="lg" className="bg-secondary hover:bg-secondary/80 text-secondary-foreground px-8 py-6 text-lg font-semibold shadow-lg" data-testid="login-btn">
                 Iniciar Sesión
               </Button>
             </Link>
