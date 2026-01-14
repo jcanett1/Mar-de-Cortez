@@ -120,7 +120,6 @@ class Order(BaseModel):
     updated_at: str
 
 class OrderCreate(BaseModel):
-    supplier_id: str
     products: List[OrderProduct]
     notes: Optional[str] = None
 
