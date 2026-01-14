@@ -118,7 +118,7 @@ class Order(BaseModel):
     notes: Optional[str] = None
     created_at: str
     updated_at: str
-    requested_by: str  # Usuario que creó la orden
+    requested_by: Optional[str] = None  # Usuario que creó la orden
 
 class OrderCreate(BaseModel):
     products: List[OrderProduct]
