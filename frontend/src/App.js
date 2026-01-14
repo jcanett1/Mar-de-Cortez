@@ -6,6 +6,7 @@ import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ClienteDashboard from '@/pages/ClienteDashboard';
 import ProveedorDashboard from '@/pages/ProveedorDashboard';
+import AdminDashboard from '@/pages/AdminDashboard';
 import '@/App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -53,10 +54,11 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path="/login" element={user ? <Navigate to={user.role === 'cliente' ? '/cliente' : '/proveedor'} /> : <Login />} />
-          <Route path="/register" element={user ? <Navigate to={user.role === 'cliente' ? '/cliente' : '/proveedor'} /> : <Register />} />
+          <Route path="/login" element={user ? <Navigate to={user.role === 'admin' ? '/admin' : user.role === 'cliente' ? '/cliente' : '/proveedor'} /> : <Login />} />
+          <Route path="/register" element={user ? <Navigate to={user.role === 'admin' ? '/admin' : user.role === 'cliente' ? '/cliente' : '/proveedor'} /> : <Register />} />
           <Route path="/cliente/*" element={user?.role === 'cliente' ? <ClienteDashboard /> : <Navigate to="/login" />} />
           <Route path="/proveedor/*" element={user?.role === 'proveedor' ? <ProveedorDashboard /> : <Navigate to="/login" />} />
+          <Route path="/admin/*" element={user?.role === 'admin' ? <AdminDashboard /> : <Navigate to="/login" />} />
         </Routes>
         <Toaster position="top-right" />
       </BrowserRouter>
