@@ -33,6 +33,26 @@ security = HTTPBearer()
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
+# Initialize admin user on startup
+@app.on_event("startup")
+async def create_default_admin():
+    admin_email = "admin@mardecortez.com"
+    existing_admin = await db.users.find_one({"email": admin_email}, {"_id": 0})
+    
+    if not existing_admin:
+        admin_id = str(uuid.uuid4())
+        admin_user = {
+            "id": admin_id,
+            "email": admin_email,
+            "password_hash": hash_password("admin123"),
+            "name": "Administrador",
+            "role": "admin",
+            "company": "Mar de Cortez",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.users.insert_one(admin_user)
+        logger.info(f"Admin user created: {admin_email} / admin123")
+
 # Models
 class UserRegister(BaseModel):
     email: EmailStr
