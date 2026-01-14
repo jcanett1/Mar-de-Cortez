@@ -706,6 +706,55 @@ async def get_all_users(
     users = await db.users.find(query, {"_id": 0}).to_list(1000)
     return users
 
+@api_router.put("/admin/users/{user_id}", response_model=User)
+async def update_user(
+    user_id: str,
+    user_data: UserUpdate,
+    admin_user: User = Depends(get_admin_user)
+):
+    existing = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    update_data = {}
+    if user_data.name:
+        update_data["name"] = user_data.name
+    if user_data.email:
+        # Check if email is already used by another user
+        email_check = await db.users.find_one({"email": user_data.email, "id": {"$ne": user_id}}, {"_id": 0})
+        if email_check:
+            raise HTTPException(status_code=400, detail="Este email ya está en uso")
+        update_data["email"] = user_data.email
+    if user_data.company is not None:
+        update_data["company"] = user_data.company
+    if user_data.password:
+        update_data["password_hash"] = hash_password(user_data.password)
+    
+    if update_data:
+        await db.users.update_one({"id": user_id}, {"$set": update_data})
+    
+    updated = await db.users.find_one({"id": user_id}, {"_id": 0})
+    return User(**updated)
+
+@api_router.delete("/admin/users/{user_id}")
+async def delete_user(
+    user_id: str,
+    admin_user: User = Depends(get_admin_user)
+):
+    # Prevent deleting admin users
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    if user["role"] == "admin":
+        raise HTTPException(status_code=400, detail="No se pueden eliminar usuarios administradores")
+    
+    result = await db.users.delete_one({"id": user_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    return {"message": "Usuario eliminado exitosamente"}
+
 @api_router.get("/admin/orders", response_model=List[Order])
 async def get_all_orders(admin_user: User = Depends(get_admin_user)):
     orders = await db.orders.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
