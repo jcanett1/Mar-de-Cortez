@@ -765,6 +765,65 @@ async def get_all_products(admin_user: User = Depends(get_admin_user)):
     products = await db.products.find({}, {"_id": 0}).to_list(1000)
     return products
 
+@api_router.post("/admin/products", response_model=Product)
+async def create_product_by_admin(
+    product_data: ProductCreate,
+    supplier_id: str,
+    admin_user: User = Depends(get_admin_user)
+):
+    # Get supplier info
+    supplier = await db.users.find_one({"id": supplier_id, "role": "proveedor"}, {"_id": 0})
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Proveedor no encontrado")
+    
+    product_id = str(uuid.uuid4())
+    product_doc = {
+        "id": product_id,
+        "name": product_data.name,
+        "description": product_data.description,
+        "category": product_data.category,
+        "price": product_data.price,
+        "supplier_id": supplier_id,
+        "supplier_name": supplier["name"],
+        "sku": product_data.sku,
+        "image_url": product_data.image_url,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.products.insert_one(product_doc)
+    return Product(**product_doc)
+
+@api_router.put("/admin/products/{product_id}", response_model=Product)
+async def update_product_by_admin(
+    product_id: str,
+    product_data: ProductCreate,
+    admin_user: User = Depends(get_admin_user)
+):
+    existing = await db.products.find_one({"id": product_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+    
+    update_data = product_data.model_dump()
+    
+    await db.products.update_one(
+        {"id": product_id},
+        {"$set": update_data}
+    )
+    
+    updated = await db.products.find_one({"id": product_id}, {"_id": 0})
+    return Product(**updated)
+
+@api_router.delete("/admin/products/{product_id}")
+async def delete_product_by_admin(
+    product_id: str,
+    admin_user: User = Depends(get_admin_user)
+):
+    result = await db.products.delete_one({"id": product_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+    
+    return {"message": "Producto eliminado exitosamente"}
+
 @api_router.post("/admin/categories", response_model=Category)
 async def create_category(
     category_data: CategoryCreate,
