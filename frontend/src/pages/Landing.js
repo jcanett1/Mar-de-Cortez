@@ -130,16 +130,82 @@ export default function Landing() {
       <div className="py-24 px-4 ocean-gradient">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6" data-testid="cta-heading">
-            Listo para transformar tu gestión de compras?
+            ¿Listo para transformar tu gestión de compras?
           </h2>
           <p className="text-xl text-white/90 mb-8">
-            Únete a Mar de Cortez y optimiza tus procesos de procurement marino.
+            Completa el formulario y nuestro equipo se pondrá en contacto contigo.
           </p>
-          <Link to="/register">
-            <Button size="lg" className="bg-secondary hover:bg-secondary/80 text-secondary-foreground px-8 py-6 text-lg font-semibold shadow-lg" data-testid="cta-register-btn">
-              Registrarse Gratis
-            </Button>
-          </Link>
+        </div>
+      </div>
+
+      {/* Registration Form Section */}
+      <div className="py-24 px-4 bg-background">
+        <div className="max-w-2xl mx-auto">
+          <Card className="shadow-2xl" data-testid="registration-form">
+            <CardContent className="p-8">
+              <h2 className="text-3xl font-bold mb-2 text-center">Solicitud de Registro</h2>
+              <p className="text-muted-foreground text-center mb-8">
+                Completa tus datos y nos pondremos en contacto contigo
+              </p>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="boat_name">Nombre del Barco</Label>
+                  <Input
+                    id="boat_name"
+                    placeholder="Ej: Neptuno III"
+                    value={formData.boat_name}
+                    onChange={(e) => setFormData({ ...formData, boat_name: e.target.value })}
+                    required
+                    data-testid="boat-name-input"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="captain_name">Nombre del Capitán</Label>
+                  <Input
+                    id="captain_name"
+                    placeholder="Ej: Juan Pérez"
+                    value={formData.captain_name}
+                    onChange={(e) => setFormData({ ...formData, captain_name: e.target.value })}
+                    required
+                    data-testid="captain-name-input"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Teléfono</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="Ej: +52 123 456 7890"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    required
+                    data-testid="phone-input"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Correo Electrónico</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="tu@email.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    required
+                    data-testid="email-input"
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  size="lg" 
+                  className="w-full" 
+                  disabled={loading}
+                  data-testid="submit-registration-btn"
+                >
+                  {loading ? 'Enviando...' : 'Enviar Solicitud'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
