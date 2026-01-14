@@ -95,10 +95,13 @@ class ProductCreate(BaseModel):
     image_url: Optional[str] = None
 
 class OrderProduct(BaseModel):
-    product_id: str
+    product_id: Optional[str] = None  # None for custom products
     product_name: str
     quantity: int
-    price: float
+    price: Optional[float] = None  # Optional for custom products
+    description: Optional[str] = None  # For custom products
+    image_url: Optional[str] = None  # For custom products
+    is_custom: bool = False
 
 class Order(BaseModel):
     model_config = ConfigDict(extra="ignore")
