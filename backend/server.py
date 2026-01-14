@@ -536,6 +536,218 @@ async def mark_notification_read(
     
     return {"message": "Notification marked as read"}
 
+# Registration Request Routes (Public)
+@api_router.post("/registration-requests")
+async def create_registration_request(request_data: RegistrationRequestCreate):
+    # Check if email already exists
+    existing_user = await db.users.find_one({"email": request_data.email}, {"_id": 0})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Este correo ya está registrado en el sistema")
+    
+    existing_request = await db.registration_requests.find_one(
+        {"email": request_data.email, "status": "pendiente"}, 
+        {"_id": 0}
+    )
+    if existing_request:
+        raise HTTPException(status_code=400, detail="Ya existe una solicitud pendiente con este correo")
+    
+    request_id = str(uuid.uuid4())
+    request_doc = {
+        "id": request_id,
+        "boat_name": request_data.boat_name,
+        "captain_name": request_data.captain_name,
+        "phone": request_data.phone,
+        "email": request_data.email,
+        "status": "pendiente",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "processed_by": None,
+        "processed_at": None
+    }
+    
+    await db.registration_requests.insert_one(request_doc)
+    
+    return {"message": "Solicitud enviada exitosamente. El equipo de Mar de Cortez se pondrá en contacto contigo.", "id": request_id}
+
+# Admin Routes
+@api_router.get("/admin/registration-requests", response_model=List[RegistrationRequest])
+async def get_registration_requests(
+    status: Optional[str] = None,
+    admin_user: User = Depends(get_admin_user)
+):
+    query = {}
+    if status:
+        query["status"] = status
+    
+    requests = await db.registration_requests.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return requests
+
+@api_router.put("/admin/registration-requests/{request_id}/approve")
+async def approve_registration_request(
+    request_id: str,
+    user_data: UserCreate,
+    admin_user: User = Depends(get_admin_user)
+):
+    request_doc = await db.registration_requests.find_one({"id": request_id}, {"_id": 0})
+    if not request_doc:
+        raise HTTPException(status_code=404, detail="Solicitud no encontrada")
+    
+    if request_doc["status"] != "pendiente":
+        raise HTTPException(status_code=400, detail="Esta solicitud ya fue procesada")
+    
+    # Create user
+    user_id = str(uuid.uuid4())
+    new_user = {
+        "id": user_id,
+        "email": user_data.email,
+        "password_hash": hash_password(user_data.password),
+        "name": user_data.name,
+        "role": user_data.role,
+        "company": user_data.company,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.users.insert_one(new_user)
+    
+    # Update request status
+    await db.registration_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "aprobado",
+            "processed_by": admin_user.id,
+            "processed_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"message": "Solicitud aprobada y usuario creado", "user_id": user_id}
+
+@api_router.put("/admin/registration-requests/{request_id}/reject")
+async def reject_registration_request(
+    request_id: str,
+    admin_user: User = Depends(get_admin_user)
+):
+    request_doc = await db.registration_requests.find_one({"id": request_id}, {"_id": 0})
+    if not request_doc:
+        raise HTTPException(status_code=404, detail="Solicitud no encontrada")
+    
+    if request_doc["status"] != "pendiente":
+        raise HTTPException(status_code=400, detail="Esta solicitud ya fue procesada")
+    
+    await db.registration_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "status": "rechazado",
+            "processed_by": admin_user.id,
+            "processed_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"message": "Solicitud rechazada"}
+
+@api_router.post("/admin/users", response_model=User)
+async def create_user_by_admin(
+    user_data: UserCreate,
+    admin_user: User = Depends(get_admin_user)
+):
+    existing = await db.users.find_one({"email": user_data.email}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    user_id = str(uuid.uuid4())
+    user_doc = {
+        "id": user_id,
+        "email": user_data.email,
+        "password_hash": hash_password(user_data.password),
+        "name": user_data.name,
+        "role": user_data.role,
+        "company": user_data.company,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.users.insert_one(user_doc)
+    return User(**user_doc)
+
+@api_router.get("/admin/users", response_model=List[User])
+async def get_all_users(
+    role: Optional[str] = None,
+    admin_user: User = Depends(get_admin_user)
+):
+    query = {}
+    if role:
+        query["role"] = role
+    
+    users = await db.users.find(query, {"_id": 0}).to_list(1000)
+    return users
+
+@api_router.get("/admin/orders", response_model=List[Order])
+async def get_all_orders(admin_user: User = Depends(get_admin_user)):
+    orders = await db.orders.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return orders
+
+@api_router.get("/admin/products", response_model=List[Product])
+async def get_all_products(admin_user: User = Depends(get_admin_user)):
+    products = await db.products.find({}, {"_id": 0}).to_list(1000)
+    return products
+
+@api_router.post("/admin/categories", response_model=Category)
+async def create_category(
+    category_data: CategoryCreate,
+    admin_user: User = Depends(get_admin_user)
+):
+    existing = await db.categories.find_one({"slug": category_data.slug}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="Category slug already exists")
+    
+    category_id = str(uuid.uuid4())
+    category_doc = {
+        "id": category_id,
+        "name": category_data.name,
+        "slug": category_data.slug,
+        "description": category_data.description,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.categories.insert_one(category_doc)
+    return Category(**category_doc)
+
+@api_router.get("/admin/categories", response_model=List[Category])
+async def get_all_categories(admin_user: User = Depends(get_admin_user)):
+    categories = await db.categories.find({}, {"_id": 0}).to_list(1000)
+    return categories
+
+@api_router.delete("/admin/categories/{category_id}")
+async def delete_category(
+    category_id: str,
+    admin_user: User = Depends(get_admin_user)
+):
+    result = await db.categories.delete_one({"id": category_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    return {"message": "Category deleted successfully"}
+
+@api_router.get("/admin/stats")
+async def get_admin_stats(admin_user: User = Depends(get_admin_user)):
+    total_users = await db.users.count_documents({})
+    total_clients = await db.users.count_documents({"role": "cliente"})
+    total_suppliers = await db.users.count_documents({"role": "proveedor"})
+    total_orders = await db.orders.count_documents({})
+    total_products = await db.products.count_documents({})
+    pending_requests = await db.registration_requests.count_documents({"status": "pendiente"})
+    
+    # Calculate revenue
+    orders = await db.orders.find({"status": "completado"}, {"_id": 0}).to_list(10000)
+    total_revenue = sum(order.get("total", 0) for order in orders)
+    
+    return {
+        "total_users": total_users,
+        "total_clients": total_clients,
+        "total_suppliers": total_suppliers,
+        "total_orders": total_orders,
+        "total_products": total_products,
+        "pending_requests": pending_requests,
+        "total_revenue": total_revenue
+    }
+
 # Include router
 app.include_router(api_router)
 
