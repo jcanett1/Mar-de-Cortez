@@ -329,6 +329,7 @@ async def create_product(
         "supplier_id": current_user.id,
         "supplier_name": current_user.name,
         "sku": product_data.sku,
+        "image_url": product_data.image_url,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
