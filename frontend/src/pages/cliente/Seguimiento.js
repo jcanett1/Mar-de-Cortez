@@ -156,9 +156,21 @@ export default function Seguimiento() {
                       <p className="text-xs text-muted-foreground mb-2">Productos ({order.products.length})</p>
                       <div className="space-y-1">
                         {order.products.map((product, idx) => (
-                          <div key={idx} className="text-sm flex justify-between" data-testid={`product-${idx}`}>
-                            <span>{product.product_name} x{product.quantity}</span>
-                            <span className="font-medium">${(product.price * product.quantity).toFixed(2)}</span>
+                          <div key={idx} className="text-sm" data-testid={`product-${idx}`}>
+                            <div className="flex justify-between">
+                              <span>
+                                {product.product_name} x{product.quantity}
+                                {product.is_custom && (
+                                  <span className="ml-2 text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded">Personalizado</span>
+                                )}
+                              </span>
+                              {product.price && (
+                                <span className="font-medium">${(product.price * product.quantity).toFixed(2)}</span>
+                              )}
+                            </div>
+                            {product.description && (
+                              <p className="text-xs text-muted-foreground ml-2">{product.description}</p>
+                            )}
                           </div>
                         ))}
                       </div>
