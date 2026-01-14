@@ -85,7 +85,7 @@ export default function CrearOrden() {
           ? { ...item, quantity: item.quantity + 1 }
           : item
       ));
-      toast.success(`Cantidad actualizada`);
+      toast.success('Cantidad actualizada');
     } else {
       setOrderItems([...orderItems, {
         product_id: product.id,
@@ -202,32 +202,32 @@ export default function CrearOrden() {
   };
 
   return (
-    <div className=\"space-y-6\" data-testid=\"crear-orden-page\">
+    <div className="space-y-6" data-testid="crear-orden-page">
       <div>
-        <h1 className=\"text-4xl font-bold mb-2\">Crear Orden de Compra</h1>
-        <p className=\"text-muted-foreground text-lg\">Selecciona productos o solicita productos personalizados</p>
+        <h1 className="text-4xl font-bold mb-2">Crear Orden de Compra</h1>
+        <p className="text-muted-foreground text-lg">Selecciona productos o solicita productos personalizados</p>
       </div>
 
-      <div className=\"grid lg:grid-cols-3 gap-6\">
+      <div className="grid lg:grid-cols-3 gap-6">
         {/* Product Selection */}
-        <div className=\"lg:col-span-2 space-y-6\">
+        <div className="lg:col-span-2 space-y-6">
           {/* Search and Filters */}
           <Card>
-            <CardContent className=\"pt-6 space-y-4\">
-              <div className=\"relative\">
-                <Search className=\"absolute left-3 top-3 h-4 w-4 text-muted-foreground\" />
+            <CardContent className="pt-6 space-y-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder=\"Buscar productos...\"
+                  placeholder="Buscar productos..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className=\"pl-10\"
-                  data-testid=\"search-products\"
+                  className="pl-10"
+                  data-testid="search-products"
                 />
               </div>
-              <div className=\"flex gap-2\">
+              <div className="flex gap-2">
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger data-testid=\"category-filter\">
-                    <SelectValue placeholder=\"Categoría\" />
+                  <SelectTrigger data-testid="category-filter">
+                    <SelectValue placeholder="Categoría" />
                   </SelectTrigger>
                   <SelectContent>
                     {CATEGORIES.map(cat => (
@@ -237,61 +237,61 @@ export default function CrearOrden() {
                 </Select>
                 <Dialog open={isCustomDialogOpen} onOpenChange={setIsCustomDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button variant=\"outline\" className=\"whitespace-nowrap\" data-testid=\"add-custom-product-btn\">
-                      <Plus className=\"mr-2 h-4 w-4\" />
+                    <Button variant="outline" className="whitespace-nowrap" data-testid="add-custom-product-btn">
+                      <Plus className="mr-2 h-4 w-4" />
                       Producto Nuevo
                     </Button>
                   </DialogTrigger>
-                  <DialogContent data-testid=\"custom-product-dialog\">
+                  <DialogContent data-testid="custom-product-dialog">
                     <DialogHeader>
                       <DialogTitle>Solicitar Producto Personalizado</DialogTitle>
                       <DialogDescription>
                         Agrega un producto que no está en la lista
                       </DialogDescription>
                     </DialogHeader>
-                    <div className=\"space-y-4\">
+                    <div className="space-y-4">
                       <div>
                         <Label>Nombre del Producto</Label>
                         <Input
-                          placeholder=\"Ej: Aceite especial\"
+                          placeholder="Ej: Aceite especial"
                           value={customProduct.name}
                           onChange={(e) => setCustomProduct({ ...customProduct, name: e.target.value })}
-                          data-testid=\"custom-product-name\"
+                          data-testid="custom-product-name"
                         />
                       </div>
                       <div>
                         <Label>Descripción</Label>
                         <Textarea
-                          placeholder=\"Especificaciones del producto...\"
+                          placeholder="Especificaciones del producto..."
                           value={customProduct.description}
                           onChange={(e) => setCustomProduct({ ...customProduct, description: e.target.value })}
                           rows={3}
-                          data-testid=\"custom-product-description\"
+                          data-testid="custom-product-description"
                         />
                       </div>
                       <div>
                         <Label>Cantidad</Label>
                         <Input
-                          type=\"number\"
-                          min=\"1\"
+                          type="number"
+                          min="1"
                           value={customProduct.quantity}
                           onChange={(e) => setCustomProduct({ ...customProduct, quantity: e.target.value })}
-                          data-testid=\"custom-product-quantity\"
+                          data-testid="custom-product-quantity"
                         />
                       </div>
                       <div>
                         <Label>Imagen (Opcional)</Label>
                         <Input
-                          type=\"file\"
-                          accept=\"image/*\"
+                          type="file"
+                          accept="image/*"
                           onChange={handleImageChange}
-                          data-testid=\"custom-product-image\"
+                          data-testid="custom-product-image"
                         />
                         {customProduct.imagePreview && (
-                          <img src={customProduct.imagePreview} alt=\"Preview\" className=\"mt-2 w-full h-32 object-cover rounded\" />
+                          <img src={customProduct.imagePreview} alt="Preview" className="mt-2 w-full h-32 object-cover rounded" />
                         )}
                       </div>
-                      <Button onClick={addCustomProduct} className=\"w-full\" data-testid=\"save-custom-product\">
+                      <Button onClick={addCustomProduct} className="w-full" data-testid="save-custom-product">
                         Agregar a la Orden
                       </Button>
                     </div>
@@ -303,30 +303,30 @@ export default function CrearOrden() {
 
           {/* Products Grid */}
           {filteredProducts.length > 0 ? (
-            <Card data-testid=\"products-list\">
+            <Card data-testid="products-list">
               <CardHeader>
                 <CardTitle>Productos Disponibles ({filteredProducts.length})</CardTitle>
                 <CardDescription>Haz clic para agregar a tu orden</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className=\"grid sm:grid-cols-2 gap-4\">
+                <div className="grid sm:grid-cols-2 gap-4">
                   {filteredProducts.map((product) => (
                     <div
                       key={product.id}
-                      className=\"border rounded-lg p-4 hover:border-secondary transition-colors cursor-pointer\"
+                      className="border rounded-lg p-4 hover:border-secondary transition-colors cursor-pointer"
                       onClick={() => addProductToOrder(product)}
                       data-testid={`product-${product.sku}`}
                     >
                       {product.image_url && (
-                        <img src={product.image_url} alt={product.name} className=\"w-full h-32 object-cover rounded mb-3\" />
+                        <img src={product.image_url} alt={product.name} className="w-full h-32 object-cover rounded mb-3" />
                       )}
-                      <h4 className=\"font-semibold mb-1\">{product.name}</h4>
-                      <p className=\"text-sm text-muted-foreground mb-2 line-clamp-2\">{product.description}</p>
-                      <div className=\"flex justify-between items-center\">
-                        <span className=\"text-lg font-bold text-secondary\">${product.price.toFixed(2)}</span>
-                        <span className=\"text-xs font-mono text-muted-foreground\">{product.sku}</span>
+                      <h4 className="font-semibold mb-1">{product.name}</h4>
+                      <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{product.description}</p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-bold text-secondary">${product.price.toFixed(2)}</span>
+                        <span className="text-xs font-mono text-muted-foreground">{product.sku}</span>
                       </div>
-                      <p className=\"text-xs text-muted-foreground mt-1\">Proveedor: {product.supplier_name}</p>
+                      <p className="text-xs text-muted-foreground mt-1">Proveedor: {product.supplier_name}</p>
                     </div>
                   ))}
                 </div>
@@ -334,9 +334,9 @@ export default function CrearOrden() {
             </Card>
           ) : (
             <Card>
-              <CardContent className=\"py-12 text-center\">
-                <Package className=\"w-16 h-16 mx-auto mb-4 opacity-50\" />
-                <p className=\"text-muted-foreground\">No se encontraron productos</p>
+              <CardContent className="py-12 text-center">
+                <Package className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <p className="text-muted-foreground">No se encontraron productos</p>
               </CardContent>
             </Card>
           )}
@@ -344,51 +344,51 @@ export default function CrearOrden() {
 
         {/* Order Summary */}
         <div>
-          <Card className=\"sticky top-6\" data-testid=\"order-summary\">
+          <Card className="sticky top-6" data-testid="order-summary">
             <CardHeader>
               <CardTitle>Resumen de Orden</CardTitle>
             </CardHeader>
-            <CardContent className=\"space-y-4\">
-              <div className=\"text-sm space-y-1\">
-                <p className=\"text-muted-foreground\">Solicitado por:</p>
-                <p className=\"font-medium\" data-testid=\"requested-by\">{user?.name}</p>
-                {user?.company && <p className=\"text-sm text-muted-foreground\">{user.company}</p>}
+            <CardContent className="space-y-4">
+              <div className="text-sm space-y-1">
+                <p className="text-muted-foreground">Solicitado por:</p>
+                <p className="font-medium" data-testid="requested-by">{user?.name}</p>
+                {user?.company && <p className="text-sm text-muted-foreground">{user.company}</p>}
               </div>
 
-              <div className=\"border-t pt-4\">
+              <div className="border-t pt-4">
                 {orderItems.length === 0 ? (
-                  <p className=\"text-muted-foreground text-center py-8\">No hay productos aún</p>
+                  <p className="text-muted-foreground text-center py-8">No hay productos aún</p>
                 ) : (
-                  <div className=\"space-y-3\">
+                  <div className="space-y-3">
                     {orderItems.map((item, index) => (
-                      <div key={index} className=\"flex items-start gap-2 p-3 border rounded\" data-testid={`cart-item-${index}`}>
-                        <div className=\"flex-1\">
-                          <p className=\"text-sm font-medium\">{item.product_name}</p>
+                      <div key={index} className="flex items-start gap-2 p-3 border rounded" data-testid={`cart-item-${index}`}>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{item.product_name}</p>
                           {item.is_custom && (
                             <div>
-                              <span className=\"text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded\">Personalizado</span>
-                              {item.description && <p className=\"text-xs text-muted-foreground mt-1\">{item.description}</p>}
+                              <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded">Personalizado</span>
+                              {item.description && <p className="text-xs text-muted-foreground mt-1">{item.description}</p>}
                             </div>
                           )}
                           {!item.is_custom && (
-                            <p className=\"text-xs text-muted-foreground\">${item.price.toFixed(2)} c/u</p>
+                            <p className="text-xs text-muted-foreground">${item.price.toFixed(2)} c/u</p>
                           )}
                         </div>
                         <Input
-                          type=\"number\"
-                          min=\"1\"
+                          type="number"
+                          min="1"
                           value={item.quantity}
                           onChange={(e) => updateQuantity(index, parseInt(e.target.value))}
-                          className=\"w-16\"
+                          className="w-16"
                           data-testid={`quantity-${index}`}
                         />
                         <Button
-                          size=\"icon\"
-                          variant=\"ghost\"
+                          size="icon"
+                          variant="ghost"
                           onClick={() => removeProduct(index)}
                           data-testid={`remove-${index}`}
                         >
-                          <Trash2 className=\"h-4 w-4\" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     ))}
@@ -396,36 +396,36 @@ export default function CrearOrden() {
                 )}
               </div>
               
-              <div className=\"border-t pt-4\">
-                <div className=\"flex justify-between text-lg font-bold mb-4\">
+              <div className="border-t pt-4">
+                <div className="flex justify-between text-lg font-bold mb-4">
                   <span>Total:</span>
-                  <span data-testid=\"order-total\">${calculateTotal().toFixed(2)}</span>
+                  <span data-testid="order-total">${calculateTotal().toFixed(2)}</span>
                 </div>
-                <p className=\"text-xs text-muted-foreground mb-4\">
+                <p className="text-xs text-muted-foreground mb-4">
                   * Los productos personalizados serán cotizados por el proveedor
                 </p>
                 
-                <div className=\"space-y-2\">
+                <div className="space-y-2">
                   <Label>Notas (Opcional)</Label>
                   <Textarea
-                    placeholder=\"Instrucciones especiales...\"
+                    placeholder="Instrucciones especiales..."
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     rows={3}
-                    data-testid=\"order-notes\"
+                    data-testid="order-notes"
                   />
                 </div>
               </div>
 
               <Button
-                className=\"w-full\"
+                className="w-full"
                 onClick={handleSubmit}
                 disabled={loading || orderItems.length === 0}
-                data-testid=\"submit-order-btn\"
+                data-testid="submit-order-btn"
               >
                 {loading ? 'Creando...' : (
                   <>
-                    <ShoppingCart className=\"mr-2 h-4 w-4\" />
+                    <ShoppingCart className="mr-2 h-4 w-4" />
                     Crear Orden
                   </>
                 )}
