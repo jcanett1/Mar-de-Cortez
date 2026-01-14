@@ -411,13 +411,55 @@ async def create_order(
     if current_user.role != "cliente":
         raise HTTPException(status_code=403, detail="Only clients can create orders")
     
-    # Get supplier info
-    supplier = await db.users.find_one({"id": order_data.supplier_id, "role": "proveedor"}, {"_id": 0})
-    if not supplier:
-        raise HTTPException(status_code=404, detail="Supplier not found")
+    # Process products and calculate total
+    processed_products = []
+    total = 0
+    suppliers = set()
     
-    # Calculate total
-    total = sum(p.price * p.quantity for p in order_data.products)
+    for product in order_data.products:
+        if product.is_custom:
+            # Custom product requested by client
+            processed_product = {
+                "product_id": None,
+                "product_name": product.product_name,
+                "quantity": product.quantity,
+                "price": None,
+                "description": product.description,
+                "image_url": product.image_url,
+                "is_custom": True
+            }
+        else:
+            # Existing product from database
+            db_product = await db.products.find_one({"id": product.product_id}, {"_id": 0})
+            if not db_product:
+                raise HTTPException(status_code=404, detail=f"Product {product.product_id} not found")
+            
+            processed_product = {
+                "product_id": product.product_id,
+                "product_name": db_product["name"],
+                "quantity": product.quantity,
+                "price": db_product["price"],
+                "is_custom": False
+            }
+            
+            # Track supplier
+            suppliers.add(db_product["supplier_id"])
+            
+            # Add to total (only for existing products with price)
+            total += db_product["price"] * product.quantity
+        
+        processed_products.append(processed_product)
+    
+    # If multiple suppliers or custom products, don't assign a specific supplier
+    supplier_id = None
+    supplier_name = None
+    
+    if len(suppliers) == 1 and not any(p.get("is_custom") for p in processed_products):
+        # Single supplier and no custom products
+        supplier_id = list(suppliers)[0]
+        supplier_doc = await db.users.find_one({"id": supplier_id}, {"_id": 0})
+        if supplier_doc:
+            supplier_name = supplier_doc["name"]
     
     order_id = str(uuid.uuid4())
     order_number = f"ORD-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{order_id[:8].upper()}"
@@ -427,24 +469,26 @@ async def create_order(
         "order_number": order_number,
         "client_id": current_user.id,
         "client_name": current_user.name,
-        "supplier_id": order_data.supplier_id,
-        "supplier_name": supplier["name"],
-        "products": [p.model_dump() for p in order_data.products],
+        "supplier_id": supplier_id,
+        "supplier_name": supplier_name,
+        "products": processed_products,
         "total": total,
         "status": "pendiente",
         "assigned_to": None,
         "notes": order_data.notes,
+        "requested_by": current_user.name,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     
     await db.orders.insert_one(order_doc)
     
-    # Create notification for supplier
-    await create_notification(
-        order_data.supplier_id,
-        f"Nueva orden recibida: {order_number} de {current_user.name}"
-    )
+    # Create notifications for suppliers if any
+    if supplier_id:
+        await create_notification(
+            supplier_id,
+            f"Nueva orden recibida: {order_number} de {current_user.name}"
+        )
     
     return Order(**order_doc)
 
