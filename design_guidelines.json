@@ -1,0 +1,222 @@
+{
+  "project_name": "Mar de Cortez",
+  "design_philosophy": {
+    "identity": "E1: The Anti-AI Designer",
+    "core_principles": [
+      "Fusion over Imitation: Mix Marine Aesthetics with Swiss Precision.",
+      "Emotion First: Trust, Clarity, and Depth.",
+      "Content is King: Data must be legible but beautiful.",
+      "Zoom In: Focus on the details of the order.",
+      "Negative Space: Use whitespace to prevent data overload."
+    ],
+    "anti_patterns": [
+      "No generic 'SaaS Blue' without texture.",
+      "No 'Inter' for headings.",
+      "No center-aligned text for data tables.",
+      "No full-screen gradients without noise/texture."
+    ]
+  },
+  "typography": {
+    "font_family": {
+      "headings": "Manrope, sans-serif",
+      "body": "Inter, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "scale": {
+      "h1": "text-4xl md:text-5xl font-bold tracking-tight",
+      "h2": "text-3xl font-semibold tracking-tight",
+      "h3": "text-2xl font-semibold",
+      "body_large": "text-lg leading-relaxed",
+      "body_base": "text-base leading-normal",
+      "caption": "text-sm text-muted-foreground"
+    },
+    "rules": [
+      "Headings must use 'Manrope'.",
+      "Data tables must use 'Inter' with tabular-nums.",
+      "Order IDs and SKUs must use 'JetBrains Mono'."
+    ]
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "name": "Deep Ocean",
+        "hsl": "222 47% 11%",
+        "hex": "#0F172A",
+        "usage": "Sidebar, Primary Buttons, Headings"
+      },
+      "secondary": {
+        "name": "Sea Foam",
+        "hsl": "189 94% 43%",
+        "hex": "#06B6D4",
+        "usage": "Accents, Active States, Icons"
+      },
+      "background": {
+        "name": "Mist",
+        "hsl": "210 40% 98%",
+        "hex": "#F8FAFC",
+        "usage": "App Background"
+      },
+      "surface": {
+        "name": "White Cap",
+        "hsl": "0 0% 100%",
+        "hex": "#FFFFFF",
+        "usage": "Cards, Modals, Tables"
+      },
+      "success": {
+        "name": "Algae",
+        "hsl": "142 76% 36%",
+        "hex": "#16A34A",
+        "usage": "Status: Delivered, Completed"
+      },
+      "warning": {
+        "name": "Amber",
+        "hsl": "38 92% 50%",
+        "hex": "#F59E0B",
+        "usage": "Status: Pending, In Transit"
+      },
+      "error": {
+        "name": "Coral",
+        "hsl": "0 84% 60%",
+        "hex": "#EF4444",
+        "usage": "Status: Cancelled, Error"
+      }
+    },
+    "theme_mode": "light",
+    "css_variables": {
+      "--background": "210 40% 98%",
+      "--foreground": "222 47% 11%",
+      "--card": "0 0% 100%",
+      "--card-foreground": "222 47% 11%",
+      "--popover": "0 0% 100%",
+      "--popover-foreground": "222 47% 11%",
+      "--primary": "222 47% 11%",
+      "--primary-foreground": "210 40% 98%",
+      "--secondary": "189 94% 43%",
+      "--secondary-foreground": "222 47% 11%",
+      "--muted": "210 40% 96.1%",
+      "--muted-foreground": "215 16% 47%",
+      "--accent": "189 94% 43%",
+      "--accent-foreground": "222 47% 11%",
+      "--destructive": "0 84.2% 60.2%",
+      "--destructive-foreground": "210 40% 98%",
+      "--border": "214 32% 91%",
+      "--input": "214 32% 91%",
+      "--ring": "222 47% 11%",
+      "--radius": "0.3rem"
+    }
+  },
+  "layout": {
+    "grid_system": {
+      "dashboard": "grid grid-cols-1 md:grid-cols-12 gap-6",
+      "card_grid": "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+    },
+    "spacing": {
+      "container_padding": "p-6 md:p-8",
+      "section_gap": "gap-8",
+      "element_gap": "gap-4"
+    },
+    "structure": {
+      "sidebar": "fixed left-0 top-0 h-full w-64 bg-primary text-primary-foreground hidden md:flex flex-col",
+      "main_content": "flex-1 md:ml-64 min-h-screen bg-background",
+      "header": "sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm rounded-md px-4 py-2 font-medium transition-all active:scale-95",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm rounded-md px-4 py-2 font-medium transition-all active:scale-95",
+      "outline": "border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md px-4 py-2 font-medium transition-all"
+    },
+    "cards": {
+      "base": "rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow duration-200",
+      "header": "flex flex-col space-y-1.5 p-6",
+      "content": "p-6 pt-0",
+      "footer": "flex items-center p-6 pt-0"
+    },
+    "inputs": {
+      "base": "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    },
+    "tables": {
+      "wrapper": "relative w-full overflow-auto rounded-md border",
+      "table": "w-full caption-bottom text-sm",
+      "header_row": "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+      "head_cell": "h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
+      "cell": "p-4 align-middle [&:has([role=checkbox])]:pr-0"
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": "backdrop-blur-md bg-white/70 border border-white/20 shadow-lg",
+    "gradients": {
+      "ocean_deep": "bg-gradient-to-br from-[#0F172A] to-[#1E293B]",
+      "ocean_light": "bg-gradient-to-br from-[#E0F2FE] to-[#F0F9FF]"
+    },
+    "shadows": {
+      "soft": "shadow-[0_4px_12px_rgba(0,0,0,0.05)]",
+      "sharp": "shadow-[4px_4px_0px_rgba(15,23,42,1)]"
+    },
+    "borders": "border border-slate-200"
+  },
+  "motion": {
+    "hover": "transition-all duration-200 ease-in-out hover:-translate-y-1",
+    "fade_in": "animate-in fade-in duration-500",
+    "slide_up": "animate-in slide-in-from-bottom-4 duration-500"
+  },
+  "assets": {
+    "images": {
+      "hero_bg": {
+        "url": "https://images.unsplash.com/photo-1724597500306-a4cbb7d1324e",
+        "alt": "Aerial view of cargo ship in ocean",
+        "usage": "Landing Page Hero Background"
+      },
+      "supplier_dashboard_bg": {
+        "url": "https://images.unsplash.com/photo-1721937127582-ed331de95a04",
+        "alt": "Warehouse interior with forklift",
+        "usage": "Supplier Portal Context"
+      },
+      "client_dashboard_bg": {
+        "url": "https://images.unsplash.com/photo-1631992337537-4b917460b258",
+        "alt": "Modern boat dashboard",
+        "usage": "Client Portal Context"
+      },
+      "categories": {
+        "food": {
+          "url": "https://images.unsplash.com/photo-1598962099619-528a224cb625",
+          "alt": "Fresh vegetables in crate"
+        },
+        "electronics": {
+          "url": "https://images.unsplash.com/photo-1684430598623-e04d754cec59",
+          "alt": "Circuit board close up"
+        },
+        "hardware": {
+          "url": "https://images.unsplash.com/photo-1581166397057-235af2b3c6dd",
+          "alt": "Red wrench tool"
+        }
+      }
+    },
+    "icons": "Lucide React (default)"
+  },
+  "accessibility": {
+    "contrast": "Ensure text contrast ratio is at least 4.5:1.",
+    "focus_states": "Visible focus rings on all interactive elements.",
+    "aria_labels": "Required for all icon-only buttons."
+  },
+  "instructions_to_main_agent": [
+    "1. Update 'tailwind.config.js' to extend the theme with the colors provided.",
+    "2. Update 'index.css' with the CSS variables for the 'Deep Ocean' theme.",
+    "3. Use 'Manrope' for all headings and 'Inter' for body text.",
+    "4. Implement the Sidebar layout for the dashboard.",
+    "5. Use the provided image URLs for the respective sections.",
+    "6. Ensure all interactive elements have 'data-testid'.",
+    "7. Do NOT use generic gradients; use the specific 'ocean_deep' or 'ocean_light' gradients.",
+    "8. Use 'sonner' for toast notifications.",
+    "9. Create a 'Layout' component that handles the sidebar/header structure."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Avoid 'AI slop' aesthetic (generic centered layouts).",
+    "Use 2-3x more spacing than typical.",
+    "Add micro-animations to every interaction.",
+    "Use 'sonner' for toasts.",
+    "Components MUST use named exports.",
+    "Pages MUST use default exports."
+  ]
+}
