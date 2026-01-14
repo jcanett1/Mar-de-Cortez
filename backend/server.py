@@ -329,13 +329,29 @@ async def create_product(
     if current_user.role != "proveedor":
         raise HTTPException(status_code=403, detail="Only suppliers can create products")
     
+    # Calculate final price
+    final_price = product_data.base_price
+    
+    # Add profit
+    if product_data.profit_type == "percentage":
+        final_price += final_price * (product_data.profit_value / 100)
+    else:  # fixed
+        final_price += product_data.profit_value
+    
+    # Add IVA
+    final_price += final_price * (product_data.iva_percentage / 100)
+    
     product_id = str(uuid.uuid4())
     product_doc = {
         "id": product_id,
         "name": product_data.name,
         "description": product_data.description,
         "category": product_data.category,
-        "price": product_data.price,
+        "base_price": product_data.base_price,
+        "profit_type": product_data.profit_type,
+        "profit_value": product_data.profit_value,
+        "iva_percentage": product_data.iva_percentage,
+        "price": round(final_price, 2),
         "supplier_id": current_user.id,
         "supplier_name": current_user.name,
         "sku": product_data.sku,
