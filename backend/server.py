@@ -79,7 +79,11 @@ class Product(BaseModel):
     name: str
     description: str
     category: str  # 'alimentos', 'electronica', 'ferreteria', 'bebidas', 'otros'
-    price: float
+    price: float  # Precio final con ganancia e IVA
+    base_price: Optional[float] = None  # Precio base/costo
+    profit_type: Optional[str] = None  # 'percentage' o 'fixed'
+    profit_value: Optional[float] = None  # Porcentaje o monto fijo
+    iva_percentage: Optional[float] = 16.0  # IVA (default 16%)
     supplier_id: str
     supplier_name: str
     sku: str
@@ -90,7 +94,10 @@ class ProductCreate(BaseModel):
     name: str
     description: str
     category: str
-    price: float
+    base_price: float  # Precio base
+    profit_type: str  # 'percentage' o 'fixed'
+    profit_value: float  # Valor de ganancia
+    iva_percentage: float = 16.0  # IVA
     sku: str
     image_url: Optional[str] = None
 
