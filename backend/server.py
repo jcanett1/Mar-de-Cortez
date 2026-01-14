@@ -109,8 +109,8 @@ class Order(BaseModel):
     order_number: str
     client_id: str
     client_name: str
-    supplier_id: str
-    supplier_name: str
+    supplier_id: Optional[str] = None
+    supplier_name: Optional[str] = None
     products: List[OrderProduct]
     total: float
     status: str  # 'pendiente', 'recibido', 'en_proceso', 'completado', 'cancelado'
@@ -118,6 +118,7 @@ class Order(BaseModel):
     notes: Optional[str] = None
     created_at: str
     updated_at: str
+    requested_by: str  # Usuario que creó la orden
 
 class OrderCreate(BaseModel):
     products: List[OrderProduct]
