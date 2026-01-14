@@ -127,6 +127,44 @@ class Notification(BaseModel):
     read: bool
     created_at: str
 
+class RegistrationRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    boat_name: str
+    captain_name: str
+    phone: str
+    email: EmailStr
+    status: str  # 'pendiente', 'aprobado', 'rechazado'
+    created_at: str
+    processed_by: Optional[str] = None
+    processed_at: Optional[str] = None
+
+class RegistrationRequestCreate(BaseModel):
+    boat_name: str
+    captain_name: str
+    phone: str
+    email: EmailStr
+
+class Category(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    name: str
+    slug: str
+    description: Optional[str] = None
+    created_at: str
+
+class CategoryCreate(BaseModel):
+    name: str
+    slug: str
+    description: Optional[str] = None
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+    name: str
+    role: str
+    company: Optional[str] = None
+
 # Helper Functions
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
