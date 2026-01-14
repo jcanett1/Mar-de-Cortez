@@ -1,9 +1,47 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Ship, Package, TrendingUp, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
+import { API } from '@/App';
 
 export default function Landing() {
+  const [formData, setFormData] = useState({
+    boat_name: '',
+    captain_name: '',
+    phone: '',
+    email: ''
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API}/registration-requests`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Error al enviar solicitud');
+      }
+
+      toast.success('¡Solicitud enviada! Nos pondremos en contacto contigo pronto.');
+      setFormData({ boat_name: '', captain_name: '', phone: '', email: '' });
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
