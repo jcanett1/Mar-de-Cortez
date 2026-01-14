@@ -612,6 +612,52 @@ async def mark_notification_read(
     
     return {"message": "Notification marked as read"}
 
+# Category Routes (Public for listing)
+@api_router.get("/categories", response_model=List[Category])
+async def get_categories():
+    categories = await db.categories.find({}, {"_id": 0}).to_list(1000)
+    return categories
+
+@api_router.post("/categories", response_model=Category)
+async def create_category_by_supplier(
+    category_data: CategoryCreate,
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role not in ["proveedor", "admin"]:
+        raise HTTPException(status_code=403, detail="Solo proveedores y admins pueden crear categorías")
+    
+    existing = await db.categories.find_one({"slug": category_data.slug}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="Esta categoría ya existe")
+    
+    category_id = str(uuid.uuid4())
+    category_doc = {
+        "id": category_id,
+        "name": category_data.name,
+        "slug": category_data.slug,
+        "description": category_data.description,
+        "created_by": current_user.id,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.categories.insert_one(category_doc)
+    return Category(**category_doc)
+
+@api_router.delete("/categories/{category_id}")
+async def delete_category_by_supplier(
+    category_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role not in ["proveedor", "admin"]:
+        raise HTTPException(status_code=403, detail="Solo proveedores y admins pueden eliminar categorías")
+    
+    result = await db.categories.delete_one({"id": category_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Categoría no encontrada")
+    
+    return {"message": "Categoría eliminada exitosamente"}
+
+
 # Registration Request Routes (Public)
 @api_router.post("/registration-requests")
 async def create_registration_request(request_data: RegistrationRequestCreate):
