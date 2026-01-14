@@ -375,8 +375,31 @@ async def update_product(
     if not existing:
         raise HTTPException(status_code=404, detail="Product not found")
     
-    update_data = product_data.model_dump()
-    update_data["supplier_name"] = current_user.name
+    # Calculate final price
+    final_price = product_data.base_price
+    
+    # Add profit
+    if product_data.profit_type == "percentage":
+        final_price += final_price * (product_data.profit_value / 100)
+    else:  # fixed
+        final_price += product_data.profit_value
+    
+    # Add IVA
+    final_price += final_price * (product_data.iva_percentage / 100)
+    
+    update_data = {
+        "name": product_data.name,
+        "description": product_data.description,
+        "category": product_data.category,
+        "base_price": product_data.base_price,
+        "profit_type": product_data.profit_type,
+        "profit_value": product_data.profit_value,
+        "iva_percentage": product_data.iva_percentage,
+        "price": round(final_price, 2),
+        "sku": product_data.sku,
+        "image_url": product_data.image_url,
+        "supplier_name": current_user.name
+    }
     
     await db.products.update_one(
         {"id": product_id},
