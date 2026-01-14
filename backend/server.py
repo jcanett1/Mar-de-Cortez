@@ -83,6 +83,7 @@ class Product(BaseModel):
     supplier_id: str
     supplier_name: str
     sku: str
+    image_url: Optional[str] = None
     created_at: str
 
 class ProductCreate(BaseModel):
@@ -91,6 +92,7 @@ class ProductCreate(BaseModel):
     category: str
     price: float
     sku: str
+    image_url: Optional[str] = None
 
 class OrderProduct(BaseModel):
     product_id: str
