@@ -8,133 +8,246 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Plus, Edit, Trash2, Package } from 'lucide-react';
-
-const CATEGORIES = [
-  { value: 'alimentos', label: 'Alimentos' },
-  { value: 'bebidas', label: 'Bebidas' },
-  { value: 'electronica', label: 'Electrónica' },
-  { value: 'ferreteria', label: 'Ferretería' },
-  { value: 'otros', label: 'Otros' }
-];
+import { Plus, Edit, Trash2, Package, Layers } from 'lucide-react';
 
 export default function Productos() {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [formData, setFormData] = useState({
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [filterCategory, setFilterCategory] = useState('all');
+  
+  const [productForm, setProductForm] = useState({
     name: '',
     description: '',
     category: '',
-    price: '',
-    sku: ''
+    base_price: '',
+    profit_type: 'percentage',
+    profit_value: '',
+    iva_percentage: '16',
+    sku: '',
+    image_url: ''
   });
-  const [filterCategory, setFilterCategory] = useState('');
+
+  const [categoryForm, setCategoryForm] = useState({
+    name: '',
+    slug: '',
+    description: ''
+  });
 
   useEffect(() => {
-    fetchProducts();
+    fetchData();
   }, []);
 
-  const fetchProducts = async () => {
+  const fetchData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const user = JSON.parse(atob(token.split('.')[1]));
-      const response = await fetch(`${API}/products?supplier_id=${user.sub}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
-      setProducts(data);
+      const [productsRes, categoriesRes] = await Promise.all([
+        fetch(`${API}/products`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${API}/categories`, { headers: { 'Authorization': `Bearer ${token}` } })
+      ]);
+      const productsData = await productsRes.json();
+      const categoriesData = await categoriesRes.json();
+      setProducts(productsData);
+      setCategories(categoriesData);
     } catch (error) {
-      toast.error('Error al cargar productos');
+      toast.error('Error al cargar datos');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e) => {
+  const calculateFinalPrice = () => {
+    const base = parseFloat(productForm.base_price) || 0;
+    const profitVal = parseFloat(productForm.profit_value) || 0;
+    const iva = parseFloat(productForm.iva_percentage) || 0;
+    
+    let priceWithProfit = base;
+    if (productForm.profit_type === 'percentage') {
+      priceWithProfit = base + (base * profitVal / 100);
+    } else {
+      priceWithProfit = base + profitVal;
+    }
+    
+    const finalPrice = priceWithProfit + (priceWithProfit * iva / 100);
+    return finalPrice.toFixed(2);
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('La imagen no debe superar 5MB');
+        return;
+      }
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleProductSubmit = async (e) => {
     e.preventDefault();
 
     try {
       const token = localStorage.getItem('token');
-      const url = editingProduct 
-        ? `${API}/products/${editingProduct.id}`
-        : `${API}/products`;
-      const method = editingProduct ? 'PUT' : 'POST';
+      let imageUrl = productForm.image_url;
+      if (imageFile) {
+        imageUrl = imagePreview;
+      }
+      
+      const productData = {
+        name: productForm.name,
+        description: productForm.description,
+        category: productForm.category,
+        base_price: parseFloat(productForm.base_price),
+        profit_type: productForm.profit_type,
+        profit_value: parseFloat(productForm.profit_value),
+        iva_percentage: parseFloat(productForm.iva_percentage),
+        sku: productForm.sku,
+        image_url: imageUrl
+      };
+      
+      if (editingProduct) {
+        const response = await fetch(`${API}/products/${editingProduct.id}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(productData)
+        });
 
-      const response = await fetch(url, {
-        method,
+        if (!response.ok) throw new Error('Error al actualizar producto');
+        toast.success('Producto actualizado');
+      } else {
+        const response = await fetch(`${API}/products`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(productData)
+        });
+
+        if (!response.ok) throw new Error('Error al crear producto');
+        toast.success('Producto creado');
+      }
+      
+      setIsProductDialogOpen(false);
+      resetProductForm();
+      fetchData();
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleCategorySubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/categories`, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          ...formData,
-          price: parseFloat(formData.price)
-        })
+        body: JSON.stringify(categoryForm)
       });
 
-      if (!response.ok) throw new Error('Error al guardar producto');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Error al crear categoría');
+      }
 
-      toast.success(editingProduct ? 'Producto actualizado' : 'Producto creado');
-      setIsDialogOpen(false);
-      resetForm();
-      fetchProducts();
+      toast.success('Categoría creada');
+      setIsCategoryDialogOpen(false);
+      setCategoryForm({ name: '', slug: '', description: '' });
+      fetchData();
     } catch (error) {
       toast.error(error.message);
     }
   };
 
-  const handleEdit = (product) => {
+  const handleEditProduct = (product) => {
     setEditingProduct(product);
-    setFormData({
+    setProductForm({
       name: product.name,
       description: product.description,
       category: product.category,
-      price: product.price.toString(),
-      sku: product.sku
+      base_price: product.base_price?.toString() || product.price.toString(),
+      profit_type: product.profit_type || 'percentage',
+      profit_value: product.profit_value?.toString() || '0',
+      iva_percentage: product.iva_percentage?.toString() || '16',
+      sku: product.sku,
+      image_url: product.image_url || ''
     });
-    setIsDialogOpen(true);
+    setImagePreview(product.image_url);
+    setIsProductDialogOpen(true);
   };
 
-  const handleDelete = async (productId) => {
-    if (!confirm('¿Estás seguro de eliminar este producto?')) return;
+  const handleDeleteProduct = async (productId) => {
+    if (!confirm('¿Eliminar este producto?')) return;
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API}/products/${productId}`, {
+      await fetch(`${API}/products/${productId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-
-      if (!response.ok) throw new Error('Error al eliminar producto');
-
       toast.success('Producto eliminado');
-      fetchProducts();
+      fetchData();
     } catch (error) {
-      toast.error(error.message);
+      toast.error('Error al eliminar');
     }
   };
 
-  const resetForm = () => {
-    setFormData({
+  const handleDeleteCategory = async (categoryId) => {
+    if (!confirm('¿Eliminar esta categoría?')) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`${API}/categories/${categoryId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      toast.success('Categoría eliminada');
+      fetchData();
+    } catch (error) {
+      toast.error('Error al eliminar');
+    }
+  };
+
+  const resetProductForm = () => {
+    setEditingProduct(null);
+    setImageFile(null);
+    setImagePreview(null);
+    setProductForm({
       name: '',
       description: '',
       category: '',
-      price: '',
-      sku: ''
+      base_price: '',
+      profit_type: 'percentage',
+      profit_value: '',
+      iva_percentage: '16',
+      sku: '',
+      image_url: ''
     });
-    setEditingProduct(null);
   };
 
   const filteredProducts = filterCategory && filterCategory !== 'all'
     ? products.filter(p => p.category === filterCategory)
     : products;
-
-  const getCategoryLabel = (value) => {
-    return CATEGORIES.find(c => c.value === value)?.label || value;
-  };
 
   if (loading) {
     return <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;
@@ -145,168 +258,233 @@ export default function Productos() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-4xl font-bold mb-2">Gestionar Productos</h1>
-          <p className="text-muted-foreground text-lg">Administra tu catálogo de productos</p>
+          <p className="text-muted-foreground text-lg">Administra tu catálogo</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) resetForm();
-        }}>
-          <DialogTrigger asChild>
-            <Button size="lg" data-testid="add-product-btn">
-              <Plus className="mr-2 h-5 w-5" />
-              Agregar Producto
-            </Button>
-          </DialogTrigger>
-          <DialogContent data-testid="product-dialog">
-            <DialogHeader>
-              <DialogTitle>{editingProduct ? 'Editar Producto' : 'Nuevo Producto'}</DialogTitle>
-              <DialogDescription>
-                {editingProduct ? 'Actualiza la información del producto' : 'Agrega un nuevo producto a tu catálogo'}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label>Nombre del Producto</Label>
-                <Input
-                  placeholder="Ej: Aceite de motor"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                  data-testid="product-name-input"
-                />
-              </div>
-              <div>
-                <Label>Descripción</Label>
-                <Textarea
-                  placeholder="Descripción del producto..."
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  required
-                  data-testid="product-description-input"
-                />
-              </div>
-              <div>
-                <Label>Categoría</Label>
-                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })} required>
-                  <SelectTrigger data-testid="product-category-select">
-                    <SelectValue placeholder="Selecciona categoría" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.map(cat => (
-                      <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Precio</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    required
-                    data-testid="product-price-input"
-                  />
-                </div>
-                <div>
-                  <Label>SKU</Label>
-                  <Input
-                    placeholder="SKU-001"
-                    value={formData.sku}
-                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                    required
-                    data-testid="product-sku-input"
-                  />
-                </div>
-              </div>
-              <Button type="submit" className="w-full" data-testid="save-product-btn">
-                {editingProduct ? 'Actualizar Producto' : 'Crear Producto'}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
       </div>
 
-      {/* Filter */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex gap-4 items-center">
-            <Label>Filtrar por categoría:</Label>
+      <Tabs defaultValue="products" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="products">
+            <Package className="mr-2 h-4 w-4" />
+            Productos
+          </TabsTrigger>
+          <TabsTrigger value="categories">
+            <Layers className="mr-2 h-4 w-4" />
+            Categorías
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="products" className="space-y-6">
+          {/* Product Actions */}
+          <div className="flex gap-2">
             <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-64" data-testid="filter-category-select">
-                <SelectValue placeholder="Todas las categorías" />
+              <SelectTrigger className="w-64">
+                <SelectValue placeholder="Filtrar por categoría" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas</SelectItem>
-                {CATEGORIES.map(cat => (
-                  <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                {categories.map(cat => (
+                  <SelectItem key={cat.id} value={cat.slug}>{cat.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Products Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="products-grid">
-        {filteredProducts.length === 0 ? (
-          <div className="col-span-full">
-            <Card>
-              <CardContent className="py-12">
-                <div className="text-center text-muted-foreground">
-                  <Package className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p>No hay productos aún. Agrega tu primer producto!</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
-          filteredProducts.map((product) => (
-            <Card key={product.id} className="card-hover" data-testid={`product-card-${product.sku}`}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg">{product.name}</CardTitle>
-                  <Badge variant="secondary">{getCategoryLabel(product.category)}</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">{product.description}</p>
-                <div className="flex justify-between items-center">
+            
+            <Dialog open={isProductDialogOpen} onOpenChange={(open) => {
+              setIsProductDialogOpen(open);
+              if (!open) resetProductForm();
+            }}>
+              <DialogTrigger asChild>
+                <Button data-testid="add-product-btn">
+                  <Plus className="mr-2 h-5 w-5" />
+                  Agregar Producto
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>{editingProduct ? 'Editar Producto' : 'Nuevo Producto'}</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleProductSubmit} className="space-y-4">
                   <div>
-                    <p className="text-2xl font-bold text-secondary">${product.price.toFixed(2)}</p>
-                    <p className="text-xs font-mono text-muted-foreground">SKU: {product.sku}</p>
+                    <Label>Nombre</Label>
+                    <Input value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} required />
                   </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => handleEdit(product)}
-                    data-testid={`edit-product-${product.id}`}
-                  >
-                    <Edit className="mr-2 h-4 w-4" />
-                    Editar
+                  <div>
+                    <Label>Descripción</Label>
+                    <Textarea value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} required />
+                  </div>
+                  <div>
+                    <Label>Categoría</Label>
+                    <Select value={productForm.category} onValueChange={(value) => setProductForm({ ...productForm, category: value })} required>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona categoría" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map(cat => (
+                          <SelectItem key={cat.id} value={cat.slug}>{cat.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Pricing Section */}
+                  <div className="border p-4 rounded-lg space-y-4 bg-muted/50">
+                    <h3 className="font-semibold">Configuración de Precio</h3>
+                    <div>
+                      <Label>Precio Base (Costo)</Label>
+                      <Input type="number" step="0.01" value={productForm.base_price} onChange={(e) => setProductForm({ ...productForm, base_price: e.target.value })} required />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Tipo de Ganancia</Label>
+                        <Select value={productForm.profit_type} onValueChange={(value) => setProductForm({ ...productForm, profit_type: value })}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="percentage">Porcentaje %</SelectItem>
+                            <SelectItem value="fixed">Monto Fijo $</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Ganancia ({productForm.profit_type === 'percentage' ? '%' : '$'})</Label>
+                        <Input type="number" step="0.01" value={productForm.profit_value} onChange={(e) => setProductForm({ ...productForm, profit_value: e.target.value })} required />
+                      </div>
+                    </div>
+                    <div>
+                      <Label>IVA (%)</Label>
+                      <Input type="number" step="0.01" value={productForm.iva_percentage} onChange={(e) => setProductForm({ ...productForm, iva_percentage: e.target.value })} required />
+                    </div>
+                    <div className="pt-2 border-t">
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold">Precio Final:</span>
+                        <span className="text-2xl font-bold text-secondary">${calculateFinalPrice()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>SKU</Label>
+                    <Input value={productForm.sku} onChange={(e) => setProductForm({ ...productForm, sku: e.target.value })} required />
+                  </div>
+                  <div>
+                    <Label>Imagen</Label>
+                    <Input type="file" accept="image/*" onChange={handleImageChange} />
+                    {imagePreview && (
+                      <img src={imagePreview} alt="Preview" className="mt-2 w-full h-48 object-cover rounded" />
+                    )}
+                  </div>
+                  <Button type="submit" className="w-full">
+                    {editingProduct ? 'Actualizar' : 'Crear'} Producto
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    className="flex-1"
-                    onClick={() => handleDelete(product.id)}
-                    data-testid={`delete-product-${product.id}`}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Eliminar
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Products Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProducts.length === 0 ? (
+              <div className="col-span-full text-center py-12">
+                <Package className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                <p className="text-muted-foreground">No hay productos</p>
+              </div>
+            ) : (
+              filteredProducts.map((product) => (
+                <Card key={product.id} className="card-hover">
+                  {product.image_url && (
+                    <div className="h-48 overflow-hidden">
+                      <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-semibold">{product.name}</h3>
+                      <Badge variant="secondary">{categories.find(c => c.slug === product.category)?.name || product.category}</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{product.description}</p>
+                    <div className="space-y-1 text-sm mb-3">
+                      {product.base_price && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Base:</span>
+                          <span>${product.base_price.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between font-bold">
+                        <span>Final:</span>
+                        <span className="text-lg text-secondary">${product.price.toFixed(2)}</span>
+                      </div>
+                    </div>
+                    <p className="text-xs font-mono text-muted-foreground mb-3">SKU: {product.sku}</p>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => handleEditProduct(product)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar
+                      </Button>
+                      <Button size="sm" variant="destructive" className="flex-1" onClick={() => handleDeleteProduct(product.id)}>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Eliminar
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="categories" className="space-y-6">
+          <div>
+            <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-5 w-5" />
+                  Nueva Categoría
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Crear Categoría</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleCategorySubmit} className="space-y-4">
+                  <div>
+                    <Label>Nombre</Label>
+                    <Input value={categoryForm.name} onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })} required />
+                  </div>
+                  <div>
+                    <Label>Slug (identificador único)</Label>
+                    <Input value={categoryForm.slug} onChange={(e) => setCategoryForm({ ...categoryForm, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })} placeholder="ej: herramientas-electricas" required />
+                  </div>
+                  <div>
+                    <Label>Descripción (Opcional)</Label>
+                    <Textarea value={categoryForm.description} onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })} />
+                  </div>
+                  <Button type="submit" className="w-full">Crear Categoría</Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {categories.map((cat) => (
+              <Card key={cat.id} className="card-hover">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold">{cat.name}</h3>
+                      <p className="text-sm text-muted-foreground">{cat.slug}</p>
+                      {cat.description && <p className="text-xs text-muted-foreground mt-1">{cat.description}</p>}
+                    </div>
+                    <Button size="icon" variant="ghost" onClick={() => handleDeleteCategory(cat.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
