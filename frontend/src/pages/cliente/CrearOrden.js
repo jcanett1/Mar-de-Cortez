@@ -369,9 +369,6 @@ export default function CrearOrden() {
                               {item.description && <p className="text-xs text-muted-foreground mt-1">{item.description}</p>}
                             </div>
                           )}
-                          {!item.is_custom && (
-                            <p className="text-xs text-muted-foreground">${item.price.toFixed(2)} c/u</p>
-                          )}
                         </div>
                         <Input
                           type="number"
