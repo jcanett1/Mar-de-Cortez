@@ -311,12 +311,13 @@ async def get_me(current_user: User = Depends(get_current_user)):
 async def get_products(
     category: Optional[str] = None,
     supplier_id: Optional[str] = None,
+    all_products: bool = False,
     current_user: User = Depends(get_current_user)
 ):
     query = {}
     
-    # Proveedores solo ven sus propios productos
-    if current_user.role == "proveedor":
+    # Proveedores solo ven sus propios productos (a menos que pidan todos)
+    if current_user.role == "proveedor" and not all_products:
         query["supplier_id"] = current_user.id
     elif supplier_id:
         query["supplier_id"] = supplier_id
