@@ -427,32 +427,10 @@ async def delete_product(
 # Order Routes
 @api_router.get("/orders", response_model=List[Order])
 async def get_orders(current_user: User = Depends(get_current_user)):
-    query = {}
     if current_user.role == "cliente":
-        query["client_id"] = current_user.id
+        query = {"client_id": current_user.id}
     elif current_user.role == "proveedor":
-        # Proveedores ven:
-        # 1. Órdenes asignadas directamente a ellos (supplier_id = su ID)
-        # 2. Órdenes con productos de su catálogo
-        # 3. Órdenes con productos personalizados (para que puedan cotizar)
-        query = {
-            "$or": [
-                {"supplier_id": current_user.id},
-                {
-                    "products": {
-                        "$elemMatch": {
-                            "$or": [
-                                {"is_custom": True},  # Productos personalizados
-                                # Check if any product belongs to this supplier
-                            ]
-                        }
-                    }
-                }
-            ]
-        }
-        
-        # También incluir órdenes donde algún producto sea de este proveedor
-        # Necesitamos obtener los IDs de productos del proveedor
+        # Obtener los IDs de productos del proveedor
         supplier_products = await db.products.find(
             {"supplier_id": current_user.id},
             {"_id": 0, "id": 1}
@@ -460,10 +438,26 @@ async def get_orders(current_user: User = Depends(get_current_user)):
         
         supplier_product_ids = [p["id"] for p in supplier_products]
         
+        # Proveedores ven:
+        # 1. Órdenes asignadas directamente a ellos
+        # 2. Órdenes con productos de su catálogo
+        # 3. Órdenes con productos personalizados (para que puedan cotizar)
+        or_conditions = [
+            {"supplier_id": current_user.id},
+            {"assigned_to": current_user.id}
+        ]
+        
+        # Si tiene productos, incluir órdenes con esos productos
         if supplier_product_ids:
-            query["$or"].append({
-                "products.product_id": {"$in": supplier_product_ids}
-            })
+            or_conditions.append({"products.product_id": {"$in": supplier_product_ids}})
+        
+        # Incluir órdenes con productos personalizados (cualquier proveedor puede cotizar)
+        or_conditions.append({"products.is_custom": True})
+        
+        query = {"$or": or_conditions}
+    else:
+        # Admin ve todas las órdenes
+        query = {}
     
     orders = await db.orders.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
     return orders
