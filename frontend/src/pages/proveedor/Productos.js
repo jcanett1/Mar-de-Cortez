@@ -199,31 +199,41 @@ export default function Productos() {
   };
 
   const handleDeleteProduct = async (productId) => {
-    if (!confirm('¿Eliminar este producto?')) return;
+    setDeleteProductDialog({ open: true, product: { id: productId } });
+  };
+
+  const confirmDeleteProduct = async () => {
+    if (!deleteProductDialog.product) return;
 
     try {
       const token = localStorage.getItem('token');
-      await fetch(`${API}/products/${productId}`, {
+      await fetch(`${API}/products/${deleteProductDialog.product.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
       toast.success('Producto eliminado');
+      setDeleteProductDialog({ open: false, product: null });
       fetchData();
     } catch (error) {
       toast.error('Error al eliminar');
     }
   };
 
-  const handleDeleteCategory = async (categoryId) => {
-    if (!confirm('¿Eliminar esta categoría?')) return;
+  const handleDeleteCategory = async (categoryId, categoryName) => {
+    setDeleteCategoryDialog({ open: true, category: { id: categoryId, name: categoryName } });
+  };
+
+  const confirmDeleteCategory = async () => {
+    if (!deleteCategoryDialog.category) return;
 
     try {
       const token = localStorage.getItem('token');
-      await fetch(`${API}/categories/${categoryId}`, {
+      await fetch(`${API}/categories/${deleteCategoryDialog.category.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
       toast.success('Categoría eliminada');
+      setDeleteCategoryDialog({ open: false, category: null });
       fetchData();
     } catch (error) {
       toast.error('Error al eliminar');
