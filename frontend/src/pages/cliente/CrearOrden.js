@@ -160,13 +160,6 @@ export default function CrearOrden() {
     setOrderItems(orderItems.filter((_, i) => i !== index));
   };
 
-  const calculateTotal = () => {
-    return orderItems.reduce((sum, item) => {
-      if (item.is_custom) return sum;
-      return sum + (item.price * item.quantity);
-    }, 0);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (orderItems.length === 0) {
