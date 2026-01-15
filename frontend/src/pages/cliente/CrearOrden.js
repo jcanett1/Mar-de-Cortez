@@ -323,7 +323,6 @@ export default function CrearOrden() {
                       <h4 className="font-semibold mb-1">{product.name}</h4>
                       <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{product.description}</p>
                       <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold text-secondary">${product.price.toFixed(2)}</span>
                         <span className="text-xs font-mono text-muted-foreground">{product.sku}</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">Proveedor: {product.supplier_name}</p>
