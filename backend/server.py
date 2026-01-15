@@ -430,7 +430,39 @@ async def get_orders(current_user: User = Depends(get_current_user)):
     if current_user.role == "cliente":
         query["client_id"] = current_user.id
     elif current_user.role == "proveedor":
-        query["supplier_id"] = current_user.id
+        # Proveedores ven:
+        # 1. Órdenes asignadas directamente a ellos (supplier_id = su ID)
+        # 2. Órdenes con productos de su catálogo
+        # 3. Órdenes con productos personalizados (para que puedan cotizar)
+        query = {
+            "$or": [
+                {"supplier_id": current_user.id},
+                {
+                    "products": {
+                        "$elemMatch": {
+                            "$or": [
+                                {"is_custom": True},  # Productos personalizados
+                                # Check if any product belongs to this supplier
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+        
+        # También incluir órdenes donde algún producto sea de este proveedor
+        # Necesitamos obtener los IDs de productos del proveedor
+        supplier_products = await db.products.find(
+            {"supplier_id": current_user.id},
+            {"_id": 0, "id": 1}
+        ).to_list(1000)
+        
+        supplier_product_ids = [p["id"] for p in supplier_products]
+        
+        if supplier_product_ids:
+            query["$or"].append({
+                "products.product_id": {"$in": supplier_product_ids}
+            })
     
     orders = await db.orders.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
     return orders
