@@ -123,6 +123,7 @@ class Order(BaseModel):
     status: str  # 'pendiente', 'recibido', 'en_proceso', 'completado', 'cancelado'
     assigned_to: Optional[str] = None
     notes: Optional[str] = None
+    cancellation_reason: Optional[str] = None  # Motivo de cancelación
     created_at: str
     updated_at: str
     requested_by: Optional[str] = None  # Usuario que creó la orden
