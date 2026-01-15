@@ -487,7 +487,7 @@ export default function Productos() {
                       <p className="text-sm text-muted-foreground">{cat.slug}</p>
                       {cat.description && <p className="text-xs text-muted-foreground mt-1">{cat.description}</p>}
                     </div>
-                    <Button size="icon" variant="ghost" onClick={() => handleDeleteCategory(cat.id)}>
+                    <Button size="icon" variant="ghost" onClick={() => handleDeleteCategory(cat.id, cat.name)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -497,6 +497,46 @@ export default function Productos() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Delete Product Dialog */}
+      <Dialog open={deleteProductDialog.open} onOpenChange={(open) => setDeleteProductDialog({ open, product: null })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Eliminación</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setDeleteProductDialog({ open: false, product: null })}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={confirmDeleteProduct}>
+              Eliminar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Category Dialog */}
+      <Dialog open={deleteCategoryDialog.open} onOpenChange={(open) => setDeleteCategoryDialog({ open, category: null })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Eliminación</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de eliminar la categoría <strong>{deleteCategoryDialog.category?.name}</strong>? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setDeleteCategoryDialog({ open: false, category: null })}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={confirmDeleteCategory}>
+              Eliminar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
