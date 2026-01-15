@@ -393,12 +393,8 @@ export default function CrearOrden() {
               </div>
               
               <div className="border-t pt-4">
-                <div className="flex justify-between text-lg font-bold mb-4">
-                  <span>Total:</span>
-                  <span data-testid="order-total">${calculateTotal().toFixed(2)}</span>
-                </div>
                 <p className="text-xs text-muted-foreground mb-4">
-                  * Los productos personalizados serán cotizados por el proveedor
+                  * Los precios serán cotizados por el proveedor
                 </p>
                 
                 <div className="space-y-2">
