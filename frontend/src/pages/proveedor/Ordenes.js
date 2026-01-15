@@ -170,8 +170,13 @@ export default function Ordenes() {
                       <div className="space-y-1">
                         {order.products.map((product, idx) => (
                           <div key={idx} className="text-sm flex justify-between bg-muted p-2 rounded">
-                            <span>{product.product_name} x{product.quantity}</span>
-                            <span className="font-medium">${(product.price * product.quantity).toFixed(2)}</span>
+                            <span>
+                              {product.product_name} x{product.quantity}
+                              {product.is_custom && <Badge variant="outline" className="ml-2 text-xs">Personalizado</Badge>}
+                            </span>
+                            <span className="font-medium">
+                              {product.price ? `$${(product.price * product.quantity).toFixed(2)}` : 'Por cotizar'}
+                            </span>
                           </div>
                         ))}
                       </div>
