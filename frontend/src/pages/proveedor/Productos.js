@@ -22,6 +22,8 @@ export default function Productos() {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [filterCategory, setFilterCategory] = useState('all');
+  const [deleteProductDialog, setDeleteProductDialog] = useState({ open: false, product: null });
+  const [deleteCategoryDialog, setDeleteCategoryDialog] = useState({ open: false, category: null });
   
   const [productForm, setProductForm] = useState({
     name: '',
