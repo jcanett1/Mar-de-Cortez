@@ -933,6 +933,64 @@ async def get_all_orders(admin_user: User = Depends(get_admin_user)):
     orders = await db.orders.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
     return orders
 
+@api_router.put("/admin/orders/{order_id}/status")
+async def update_order_status_by_admin(
+    order_id: str,
+    status_data: OrderStatusUpdate,
+    cancellation_reason: Optional[str] = None,
+    admin_user: User = Depends(get_admin_user)
+):
+    order = await db.orders.find_one({"id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Orden no encontrada")
+    
+    update_data = {
+        "status": status_data.status,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    if status_data.assigned_to:
+        update_data["assigned_to"] = status_data.assigned_to
+    
+    if status_data.status == "cancelado" and cancellation_reason:
+        update_data["cancellation_reason"] = cancellation_reason
+    
+    await db.orders.update_one(
+        {"id": order_id},
+        {"$set": update_data}
+    )
+    
+    # Notify client
+    await create_notification(
+        order["client_id"],
+        f"Estado de orden {order['order_number']} actualizado a: {status_data.status}"
+    )
+    
+    updated = await db.orders.find_one({"id": order_id}, {"_id": 0})
+    return Order(**updated)
+
+@api_router.delete("/admin/orders/{order_id}")
+async def delete_order_by_admin(
+    order_id: str,
+    admin_user: User = Depends(get_admin_user)
+):
+    order = await db.orders.find_one({"id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Orden no encontrada")
+    
+    # Solo se pueden eliminar órdenes canceladas
+    if order["status"] != "cancelado":
+        raise HTTPException(
+            status_code=400, 
+            detail="Solo se pueden eliminar órdenes canceladas"
+        )
+    
+    result = await db.orders.delete_one({"id": order_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Orden no encontrada")
+    
+    return {"message": "Orden eliminada exitosamente"}
+
 @api_router.get("/admin/products", response_model=List[Product])
 async def get_all_products(admin_user: User = Depends(get_admin_user)):
     products = await db.products.find({}, {"_id": 0}).to_list(1000)
