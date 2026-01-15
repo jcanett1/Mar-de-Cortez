@@ -79,6 +79,7 @@ export default function ManageProducts() {
       const categoriesData = await categoriesRes.json();
       
       setProducts(productsData);
+      setFilteredProducts(productsData);
       setSuppliers(suppliersData);
       setCategories(categoriesData);
     } catch (error) {
