@@ -1007,13 +1007,29 @@ async def create_product_by_admin(
     if not supplier:
         raise HTTPException(status_code=404, detail="Proveedor no encontrado")
     
+    # Calculate final price
+    final_price = product_data.base_price
+    
+    # Add profit
+    if product_data.profit_type == "percentage":
+        final_price += final_price * (product_data.profit_value / 100)
+    else:  # fixed
+        final_price += product_data.profit_value
+    
+    # Add IVA
+    final_price += final_price * (product_data.iva_percentage / 100)
+    
     product_id = str(uuid.uuid4())
     product_doc = {
         "id": product_id,
         "name": product_data.name,
         "description": product_data.description,
         "category": product_data.category,
-        "price": product_data.price,
+        "base_price": product_data.base_price,
+        "profit_type": product_data.profit_type,
+        "profit_value": product_data.profit_value,
+        "iva_percentage": product_data.iva_percentage,
+        "price": round(final_price, 2),
         "supplier_id": supplier_id,
         "supplier_name": supplier["name"],
         "sku": product_data.sku,
@@ -1034,7 +1050,30 @@ async def update_product_by_admin(
     if not existing:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
     
-    update_data = product_data.model_dump()
+    # Calculate final price
+    final_price = product_data.base_price
+    
+    # Add profit
+    if product_data.profit_type == "percentage":
+        final_price += final_price * (product_data.profit_value / 100)
+    else:  # fixed
+        final_price += product_data.profit_value
+    
+    # Add IVA
+    final_price += final_price * (product_data.iva_percentage / 100)
+    
+    update_data = {
+        "name": product_data.name,
+        "description": product_data.description,
+        "category": product_data.category,
+        "base_price": product_data.base_price,
+        "profit_type": product_data.profit_type,
+        "profit_value": product_data.profit_value,
+        "iva_percentage": product_data.iva_percentage,
+        "price": round(final_price, 2),
+        "sku": product_data.sku,
+        "image_url": product_data.image_url
+    }
     
     await db.products.update_one(
         {"id": product_id},
