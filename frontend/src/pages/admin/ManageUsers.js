@@ -118,11 +118,16 @@ export default function ManageUsers() {
   };
 
   const handleDelete = async (userId, userName) => {
-    if (!confirm(`¿Estás seguro de eliminar al usuario ${userName}?`)) return;
+    setUserToDelete({ id: userId, name: userName });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API}/admin/users/${userId}`, {
+      const response = await fetch(`${API}/admin/users/${userToDelete.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -133,6 +138,8 @@ export default function ManageUsers() {
       }
 
       toast.success('Usuario eliminado exitosamente');
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
       fetchUsers();
     } catch (error) {
       toast.error(error.message);
