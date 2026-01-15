@@ -314,10 +314,15 @@ async def get_products(
     current_user: User = Depends(get_current_user)
 ):
     query = {}
+    
+    # Proveedores solo ven sus propios productos
+    if current_user.role == "proveedor":
+        query["supplier_id"] = current_user.id
+    elif supplier_id:
+        query["supplier_id"] = supplier_id
+    
     if category:
         query["category"] = category
-    if supplier_id:
-        query["supplier_id"] = supplier_id
     
     products = await db.products.find(query, {"_id": 0}).to_list(1000)
     return products
