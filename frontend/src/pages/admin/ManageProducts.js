@@ -453,17 +453,19 @@ export default function ManageProducts() {
 
       <Card data-testid="products-list">
         <CardHeader>
-          <CardTitle>Productos ({products.length})</CardTitle>
+          <CardTitle>Productos ({filteredProducts.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          {products.length === 0 ? (
+          {filteredProducts.length === 0 ? (
             <div className="text-center py-12">
               <Package className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p className="text-muted-foreground">No hay productos aún</p>
+              <p className="text-muted-foreground">
+                {products.length === 0 ? 'No hay productos aún' : 'No se encontraron productos con los filtros aplicados'}
+              </p>
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <Card key={product.id} className="card-hover overflow-hidden" data-testid={`product-${product.sku}`}>
                   {product.image_url && (
                     <div className="h-48 overflow-hidden">
