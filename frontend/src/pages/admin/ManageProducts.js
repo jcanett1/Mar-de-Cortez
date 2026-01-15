@@ -11,27 +11,26 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Plus, Edit, Trash2, Package } from 'lucide-react';
 
-const CATEGORIES = [
-  { value: 'alimentos', label: 'Alimentos' },
-  { value: 'bebidas', label: 'Bebidas' },
-  { value: 'electronica', label: 'Electrónica' },
-  { value: 'ferreteria', label: 'Ferretería' },
-  { value: 'otros', label: 'Otros' }
-];
-
 export default function ManageProducts() {
   const [products, setProducts] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
+  
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     category: '',
-    price: '',
+    base_price: '',
+    profit_type: 'percentage',
+    profit_value: '',
+    iva_percentage: '16',
     sku: '',
     supplier_id: '',
     image_url: ''
@@ -44,21 +43,40 @@ export default function ManageProducts() {
   const fetchData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const [productsRes, suppliersRes] = await Promise.all([
+      const [productsRes, suppliersRes, categoriesRes] = await Promise.all([
         fetch(`${API}/admin/products`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch(`${API}/admin/users?role=proveedor`, { headers: { 'Authorization': `Bearer ${token}` } })
+        fetch(`${API}/admin/users?role=proveedor`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${API}/categories`, { headers: { 'Authorization': `Bearer ${token}` } })
       ]);
       
       const productsData = await productsRes.json();
       const suppliersData = await suppliersRes.json();
+      const categoriesData = await categoriesRes.json();
       
       setProducts(productsData);
       setSuppliers(suppliersData);
+      setCategories(categoriesData);
     } catch (error) {
       toast.error('Error al cargar datos');
     } finally {
       setLoading(false);
     }
+  };
+
+  const calculateFinalPrice = () => {
+    const base = parseFloat(formData.base_price) || 0;
+    const profitVal = parseFloat(formData.profit_value) || 0;
+    const iva = parseFloat(formData.iva_percentage) || 0;
+    
+    let priceWithProfit = base;
+    if (formData.profit_type === 'percentage') {
+      priceWithProfit = base + (base * profitVal / 100);
+    } else {
+      priceWithProfit = base + profitVal;
+    }
+    
+    const finalPrice = priceWithProfit + (priceWithProfit * iva / 100);
+    return finalPrice.toFixed(2);
   };
 
   const handleImageChange = (e) => {
@@ -86,7 +104,6 @@ export default function ManageProducts() {
       const token = localStorage.getItem('token');
       let imageUrl = formData.image_url;
       
-      // Convert image to base64 if new image selected
       if (imageFile) {
         imageUrl = imagePreview;
       }
@@ -95,13 +112,15 @@ export default function ManageProducts() {
         name: formData.name,
         description: formData.description,
         category: formData.category,
-        price: parseFloat(formData.price),
+        base_price: parseFloat(formData.base_price),
+        profit_type: formData.profit_type,
+        profit_value: parseFloat(formData.profit_value),
+        iva_percentage: parseFloat(formData.iva_percentage),
         sku: formData.sku,
         image_url: imageUrl
       };
       
       if (editingProduct) {
-        // Update product
         const response = await fetch(`${API}/admin/products/${editingProduct.id}`, {
           method: 'PUT',
           headers: {
@@ -114,7 +133,6 @@ export default function ManageProducts() {
         if (!response.ok) throw new Error('Error al actualizar producto');
         toast.success('Producto actualizado exitosamente');
       } else {
-        // Create product
         const response = await fetch(`${API}/admin/products?supplier_id=${formData.supplier_id}`, {
           method: 'POST',
           headers: {
@@ -142,7 +160,10 @@ export default function ManageProducts() {
       name: product.name,
       description: product.description,
       category: product.category,
-      price: product.price.toString(),
+      base_price: product.base_price?.toString() || product.price.toString(),
+      profit_type: product.profit_type || 'percentage',
+      profit_value: product.profit_value?.toString() || '0',
+      iva_percentage: product.iva_percentage?.toString() || '16',
       sku: product.sku,
       supplier_id: product.supplier_id,
       image_url: product.image_url || ''
@@ -151,12 +172,17 @@ export default function ManageProducts() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (productId, productName) => {
-    if (!confirm(`¿Estás seguro de eliminar ${productName}?`)) return;
+  const handleDelete = (product) => {
+    setProductToDelete(product);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!productToDelete) return;
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API}/admin/products/${productId}`, {
+      const response = await fetch(`${API}/admin/products/${productToDelete.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -164,6 +190,8 @@ export default function ManageProducts() {
       if (!response.ok) throw new Error('Error al eliminar producto');
 
       toast.success('Producto eliminado exitosamente');
+      setDeleteDialogOpen(false);
+      setProductToDelete(null);
       fetchData();
     } catch (error) {
       toast.error(error.message);
@@ -178,7 +206,10 @@ export default function ManageProducts() {
       name: '',
       description: '',
       category: '',
-      price: '',
+      base_price: '',
+      profit_type: 'percentage',
+      profit_value: '',
+      iva_percentage: '16',
       sku: '',
       supplier_id: '',
       image_url: ''
@@ -186,7 +217,7 @@ export default function ManageProducts() {
   };
 
   const getCategoryLabel = (value) => {
-    return CATEGORIES.find(c => c.value === value)?.label || value;
+    return categories.find(c => c.slug === value)?.name || value;
   };
 
   if (loading) {
@@ -197,7 +228,7 @@ export default function ManageProducts() {
     <div className="space-y-6" data-testid="manage-products-page">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold mb-2">Gestionar Productos</h1>
+          <h1 className="text-4xl font-bold mb-2">Todos los Productos</h1>
           <p className="text-muted-foreground text-lg">Administra el catálogo completo</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
@@ -233,6 +264,7 @@ export default function ManageProducts() {
                   </Select>
                 </div>
               )}
+              
               <div>
                 <Label>Nombre del Producto</Label>
                 <Input
@@ -243,6 +275,7 @@ export default function ManageProducts() {
                   data-testid="product-name"
                 />
               </div>
+              
               <div>
                 <Label>Descripción</Label>
                 <Textarea
@@ -253,6 +286,7 @@ export default function ManageProducts() {
                   data-testid="product-description"
                 />
               </div>
+              
               <div>
                 <Label>Categoría</Label>
                 <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })} required>
@@ -260,36 +294,85 @@ export default function ManageProducts() {
                     <SelectValue placeholder="Selecciona categoría" />
                   </SelectTrigger>
                   <SelectContent>
-                    {CATEGORIES.map(cat => (
-                      <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                    {categories.map(cat => (
+                      <SelectItem key={cat.id} value={cat.slug}>{cat.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+
+              {/* Pricing Section */}
+              <div className="border p-4 rounded-lg space-y-4 bg-muted/50">
+                <h3 className="font-semibold">Configuración de Precio</h3>
                 <div>
-                  <Label>Precio</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    required
-                    data-testid="product-price"
+                  <Label>Precio Base (Costo)</Label>
+                  <Input 
+                    type="number" 
+                    step="0.01" 
+                    value={formData.base_price} 
+                    onChange={(e) => setFormData({ ...formData, base_price: e.target.value })} 
+                    required 
+                    data-testid="product-base-price"
                   />
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Tipo de Ganancia</Label>
+                    <Select 
+                      value={formData.profit_type} 
+                      onValueChange={(value) => setFormData({ ...formData, profit_type: value })}
+                    >
+                      <SelectTrigger data-testid="product-profit-type">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="percentage">Porcentaje %</SelectItem>
+                        <SelectItem value="fixed">Monto Fijo $</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Ganancia ({formData.profit_type === 'percentage' ? '%' : '$'})</Label>
+                    <Input 
+                      type="number" 
+                      step="0.01" 
+                      value={formData.profit_value} 
+                      onChange={(e) => setFormData({ ...formData, profit_value: e.target.value })} 
+                      required 
+                      data-testid="product-profit-value"
+                    />
+                  </div>
+                </div>
                 <div>
-                  <Label>SKU</Label>
-                  <Input
-                    placeholder="SKU-001"
-                    value={formData.sku}
-                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                    required
-                    data-testid="product-sku"
+                  <Label>IVA (%)</Label>
+                  <Input 
+                    type="number" 
+                    step="0.01" 
+                    value={formData.iva_percentage} 
+                    onChange={(e) => setFormData({ ...formData, iva_percentage: e.target.value })} 
+                    required 
+                    data-testid="product-iva"
                   />
+                </div>
+                <div className="pt-2 border-t">
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold">Precio Final:</span>
+                    <span className="text-2xl font-bold text-secondary" data-testid="product-final-price">${calculateFinalPrice()}</span>
+                  </div>
                 </div>
               </div>
+
+              <div>
+                <Label>SKU</Label>
+                <Input
+                  placeholder="SKU-001"
+                  value={formData.sku}
+                  onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                  required
+                  data-testid="product-sku"
+                />
+              </div>
+              
               <div>
                 <Label>Imagen del Producto</Label>
                 <Input
@@ -305,6 +388,7 @@ export default function ManageProducts() {
                   </div>
                 )}
               </div>
+              
               <Button type="submit" className="w-full" data-testid="save-product">
                 {editingProduct ? 'Actualizar Producto' : 'Crear Producto'}
               </Button>
@@ -338,11 +422,23 @@ export default function ManageProducts() {
                       <Badge variant="secondary">{getCategoryLabel(product.category)}</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{product.description}</p>
-                    <div className="flex justify-between items-center mb-3">
-                      <span className="text-2xl font-bold text-secondary">${product.price.toFixed(2)}</span>
-                      <span className="text-xs font-mono text-muted-foreground">{product.sku}</span>
+                    
+                    <div className="space-y-1 text-sm mb-3">
+                      {product.base_price && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Base:</span>
+                          <span>${product.base_price.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between font-bold">
+                        <span>Final:</span>
+                        <span className="text-lg text-secondary">${product.price.toFixed(2)}</span>
+                      </div>
                     </div>
+                    
+                    <p className="text-xs font-mono text-muted-foreground mb-1">SKU: {product.sku}</p>
                     <p className="text-xs text-muted-foreground mb-3">Proveedor: {product.supplier_name}</p>
+                    
                     <div className="flex gap-2">
                       <Button
                         size="sm"
@@ -358,7 +454,7 @@ export default function ManageProducts() {
                         size="sm"
                         variant="destructive"
                         className="flex-1"
-                        onClick={() => handleDelete(product.id, product.name)}
+                        onClick={() => handleDelete(product)}
                         data-testid={`delete-product-${product.id}`}
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
@@ -372,6 +468,26 @@ export default function ManageProducts() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Eliminación</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de eliminar el producto <strong>{productToDelete?.name}</strong>? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Eliminar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
