@@ -479,17 +479,20 @@ export default function ManageProducts() {
                     </div>
                     <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{product.description}</p>
                     
-                    <div className="space-y-1 text-sm mb-3">
+                    <div className="bg-muted/50 rounded-lg p-3 mb-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Precio Final:</span>
+                        <span className="text-xl font-bold text-secondary">${product.price?.toFixed(2) || '0.00'}</span>
+                      </div>
                       {product.base_price && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Base:</span>
-                          <span>${product.base_price.toFixed(2)}</span>
+                        <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                          <span>Base: ${product.base_price.toFixed(2)}</span>
+                          <span>
+                            + {product.profit_type === 'percentage' ? `${product.profit_value}%` : `$${product.profit_value}`} 
+                            {' '}+ IVA {product.iva_percentage || 16}%
+                          </span>
                         </div>
                       )}
-                      <div className="flex justify-between font-bold">
-                        <span>Final:</span>
-                        <span className="text-lg text-secondary">${product.price.toFixed(2)}</span>
-                      </div>
                     </div>
                     
                     <p className="text-xs font-mono text-muted-foreground mb-1">SKU: {product.sku}</p>
