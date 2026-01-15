@@ -109,5 +109,16 @@ Aplicación web de e-procurement marítimo inspirada en seaproc.com, con tres po
 **Fecha:** Diciembre 2025
 **Cambios:**
 - Agregado buscador y filtro por categoría al portal de productos del Admin
-- Precio final visible en cada producto del Admin
+- Precio final visible en cada producto del Admin con desglose (Base + Ganancia + IVA)
 - Precios ocultos en el portal del Cliente al crear órdenes
+- Corregido cálculo de precio final en endpoints de Admin (create/update productos)
+- Corregida visibilidad de órdenes para proveedores
+- Proveedores ahora solo ven sus propios productos en su portal
+
+## Credenciales de Prueba
+
+| Rol | Email | Contraseña |
+|-----|-------|------------|
+| Admin | skylinksonora@gmail.com | Edel1ewy |
+| Cliente | roberto@oceanicexplorer.com | TestClient123! |
+| Proveedor | julio.canett@hotmail.com | Proveedor123! |
