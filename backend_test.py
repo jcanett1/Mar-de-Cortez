@@ -5,7 +5,7 @@ import base64
 from datetime import datetime
 
 class MarDeCortezAPITester:
-    def __init__(self, base_url="https://mardecortez.preview.emergentagent.com"):
+    def __init__(self, base_url="https://marineprocurement.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.cliente_token = None

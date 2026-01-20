@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { API } from '@/App';
+import { createFooter } from './footer.js';
 
 export default function Landing() {
   const [formData, setFormData] = useState({
@@ -59,7 +60,7 @@ export default function Landing() {
             Mar de Cortez
           </h1>
           <p className="text-xl md:text-2xl text-white/90 mb-8 leading-relaxed animate-in slide-in-from-bottom-4 duration-700 delay-150" data-testid="hero-description">
-            Sistema de e-procurement marino basado en la nube. Gestiona todas tus actividades de compra de manera eficiente y simplificada.
+            Sistema de pedidos marino basado en la nube. Gestiona todas tus actividades de compra de manera eficiente y simplificada.
           </p>
           <div className="flex gap-4 justify-center animate-in slide-in-from-bottom-4 duration-700 delay-300">
             <Link to="/login">
@@ -208,6 +209,7 @@ export default function Landing() {
           </Card>
         </div>
       </div>
+      <createFooter />
     </div>
   );
 }
