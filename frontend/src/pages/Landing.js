@@ -209,7 +209,7 @@ export default function Landing() {
           </Card>
         </div>
       </div>
-      <createFooter />
+      <Footer />
     </div>
   );
 }
