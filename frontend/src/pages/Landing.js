@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { API } from '@/App';
-import { createFooter } from './footer.js';
+import Footer from '@/components/Footer';
 
 export default function Landing() {
   const [formData, setFormData] = useState({
