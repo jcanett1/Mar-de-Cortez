@@ -67,17 +67,28 @@ export default function Landing() {
   };
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <div 
-        className="relative min-h-screen flex items-center justify-center"
-        style={{
-          backgroundImage: 'url(https://images.unsplash.com/photo-1724597500306-a4cbb7d1324e)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0F172A]/90 to-[#1E293B]/80"></div>
-        <div className="relative z-10 text-center px-4 max-w-5xl">
+      {/* Hero Section with Image Carousel */}
+      <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Background Images Container */}
+        {heroImages.map((image, index) => (
+          <div
+            key={index}
+            className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
+            style={{
+              backgroundImage: `url(${image})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              opacity: index === currentImageIndex ? 1 : 0,
+              zIndex: index === currentImageIndex ? 1 : 0,
+            }}
+          />
+        ))}
+        
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0F172A]/85 to-[#1E293B]/75 z-10"></div>
+        
+        {/* Content */}
+        <div className="relative z-20 text-center px-4 max-w-5xl">
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 animate-in slide-in-from-bottom-4 duration-700" data-testid="hero-heading">
             Mar de Cortez
           </h1>
@@ -90,6 +101,22 @@ export default function Landing() {
                 Iniciar Sesión
               </Button>
             </Link>
+          </div>
+          
+          {/* Image Indicators */}
+          <div className="flex gap-2 justify-center mt-12">
+            {heroImages.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentImageIndex(index)}
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                  index === currentImageIndex 
+                    ? 'bg-white w-8' 
+                    : 'bg-white/40 hover:bg-white/60'
+                }`}
+                aria-label={`Ir a imagen ${index + 1}`}
+              />
+            ))}
           </div>
         </div>
       </div>
