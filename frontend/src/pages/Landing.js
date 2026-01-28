@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Ship, Package, TrendingUp, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,16 @@ import { toast } from 'sonner';
 import { API } from '@/App';
 import Footer from '@/components/Footer';
 
+// Imágenes de barcos mercantes y puertos
+const heroImages = [
+  'https://images.unsplash.com/photo-1724597500306-a4cbb7d1324e', // Imagen original
+  'https://images.unsplash.com/photo-1703977883249-d959f2b0c1ae', // Bulk Carrier at sunset
+  'https://images.unsplash.com/photo-1637464019106-2789e949c28a', // Large cargo ship
+  'https://images.unsplash.com/photo-1761910502116-9c1c0fb3620b', // Cargo ships at industrial port
+  'https://images.unsplash.com/photo-1703226741497-6de4f67c6e11', // Vibrant port scene with cranes
+  'https://images.unsplash.com/photo-1753483395880-46dc1c2ece54', // Cargo ship on calm water
+];
+
 export default function Landing() {
   const [formData, setFormData] = useState({
     boat_name: '',
@@ -17,6 +27,18 @@ export default function Landing() {
     email: ''
   });
   const [loading, setLoading] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Carrusel automático de imágenes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => 
+        prevIndex === heroImages.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 5000); // Cambiar cada 5 segundos
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
