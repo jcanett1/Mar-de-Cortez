@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Ship } from 'lucide-react';
+import { Ship, X } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -43,14 +43,40 @@ export default function Login() {
     }
   };
 
+  // Cerrar y volver a la landing page
+  const handleClose = () => {
+    navigate('/');
+  };
+
+  // Cerrar si se hace clic en el fondo (fuera del card)
+  const handleBackgroundClick = (e) => {
+    if (e.target === e.currentTarget) {
+      navigate('/');
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12" style={{
-      backgroundImage: 'url(https://images.unsplash.com/photo-1724597500306-a4cbb7d1324e)',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center'
-    }}>
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0F172A]/90 to-[#1E293B]/80"></div>
-      <Card className="w-full max-w-md relative z-10 shadow-2xl" data-testid="login-card">
+    <div 
+      className="min-h-screen flex items-center justify-center px-4 py-12 cursor-pointer" 
+      style={{
+        backgroundImage: 'url(https://images.unsplash.com/photo-1724597500306-a4cbb7d1324e)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }}
+      onClick={handleBackgroundClick}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0F172A]/90 to-[#1E293B]/80" onClick={handleBackgroundClick}></div>
+      <Card className="w-full max-w-md relative z-10 shadow-2xl cursor-default" data-testid="login-card">
+        {/* Botón de cerrar */}
+        <button
+          onClick={handleClose}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-muted hover:bg-destructive hover:text-destructive-foreground flex items-center justify-center transition-colors duration-200 z-20"
+          aria-label="Cerrar"
+          data-testid="login-close-btn"
+        >
+          <X className="w-4 h-4" />
+        </button>
+        
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center mb-4">
             <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
