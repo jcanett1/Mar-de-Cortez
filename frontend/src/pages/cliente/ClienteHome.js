@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { AuthContext, API } from '@/App';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, FileText, Package, TrendingUp } from 'lucide-react';
+import { ShoppingCart, FileText, Package, TrendingUp, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ClienteHome() {
