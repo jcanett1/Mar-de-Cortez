@@ -48,6 +48,11 @@ export default function ClienteHome() {
     return statusMap[status] || status;
   };
 
+  // Verificar si los precios están confirmados (proveedor asignado y estado no pendiente)
+  const isPriceVisible = (order) => {
+    return order.price_confirmed || (order.supplier_id && order.status !== 'pendiente');
+  };
+
   if (loading) {
     return <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;
   }
