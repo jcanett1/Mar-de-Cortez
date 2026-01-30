@@ -138,6 +138,11 @@ class OrderStatusUpdate(BaseModel):
     status: str
     assigned_to: Optional[str] = None
 
+class OrderTakeAndUpdate(BaseModel):
+    status: str
+    assigned_to: Optional[str] = None
+    product_prices: Optional[dict] = None  # {product_index: price}
+
 class Quotation(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str
