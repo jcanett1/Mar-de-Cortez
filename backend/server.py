@@ -565,14 +565,50 @@ async def update_order_status(
     if current_user.role != "proveedor":
         raise HTTPException(status_code=403, detail="Only suppliers can update order status")
     
-    order = await db.orders.find_one({"id": order_id, "supplier_id": current_user.id}, {"_id": 0})
+    # Buscar la orden - el proveedor puede actualizar si:
+    # 1. Ya está asignado a la orden
+    # 2. La orden tiene productos de su catálogo y no tiene proveedor asignado
+    order = await db.orders.find_one({"id": order_id}, {"_id": 0})
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Verificar si el proveedor puede tomar/actualizar esta orden
+    can_update = False
+    
+    # Si ya es el proveedor asignado
+    if order.get("supplier_id") == current_user.id:
+        can_update = True
+    # Si la orden no tiene proveedor asignado, verificar si tiene productos del proveedor
+    elif order.get("supplier_id") is None:
+        # Obtener IDs de productos del proveedor
+        supplier_products = await db.products.find(
+            {"supplier_id": current_user.id},
+            {"_id": 0, "id": 1}
+        ).to_list(1000)
+        supplier_product_ids = [p["id"] for p in supplier_products]
+        
+        # Verificar si algún producto de la orden pertenece al proveedor
+        for product in order.get("products", []):
+            if product.get("product_id") in supplier_product_ids:
+                can_update = True
+                break
+            # También permitir si tiene productos personalizados (cualquier proveedor puede cotizar)
+            if product.get("is_custom"):
+                can_update = True
+                break
+    
+    if not can_update:
+        raise HTTPException(status_code=403, detail="No tienes permiso para actualizar esta orden")
     
     update_data = {
         "status": status_data.status,
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
+    
+    # Si la orden no tiene proveedor y el proveedor está actualizando, asignarse automáticamente
+    if order.get("supplier_id") is None:
+        update_data["supplier_id"] = current_user.id
+        update_data["supplier_name"] = current_user.name
     
     if status_data.assigned_to:
         update_data["assigned_to"] = status_data.assigned_to
@@ -585,7 +621,83 @@ async def update_order_status(
     # Create notification for client
     await create_notification(
         order["client_id"],
-        f"Estado de orden {order['order_number']} actualizado a: {status_data.status}"
+        f"Estado de orden {order['order_number']} actualizado a: {status_data.status} por {current_user.name}"
+    )
+    
+    updated = await db.orders.find_one({"id": order_id}, {"_id": 0})
+    return Order(**updated)
+
+# Nuevo endpoint para que el proveedor tome una orden y agregue precios
+@api_router.put("/orders/{order_id}/take")
+async def take_order_and_set_prices(
+    order_id: str,
+    data: OrderTakeAndUpdate,
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role != "proveedor":
+        raise HTTPException(status_code=403, detail="Only suppliers can take orders")
+    
+    order = await db.orders.find_one({"id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Verificar que la orden no tenga ya un proveedor asignado (a menos que sea el mismo)
+    if order.get("supplier_id") and order.get("supplier_id") != current_user.id:
+        raise HTTPException(status_code=400, detail="Esta orden ya tiene un proveedor asignado")
+    
+    # Verificar acceso a la orden
+    can_take = False
+    supplier_products = await db.products.find(
+        {"supplier_id": current_user.id},
+        {"_id": 0, "id": 1}
+    ).to_list(1000)
+    supplier_product_ids = [p["id"] for p in supplier_products]
+    
+    for product in order.get("products", []):
+        if product.get("product_id") in supplier_product_ids or product.get("is_custom"):
+            can_take = True
+            break
+    
+    if not can_take and order.get("supplier_id") != current_user.id:
+        raise HTTPException(status_code=403, detail="No tienes permiso para tomar esta orden")
+    
+    # Actualizar precios de productos si se proporcionan
+    products = order.get("products", [])
+    total = 0
+    
+    if data.product_prices:
+        for idx_str, price in data.product_prices.items():
+            idx = int(idx_str)
+            if 0 <= idx < len(products):
+                products[idx]["price"] = float(price)
+    
+    # Calcular total con los precios actualizados
+    for product in products:
+        if product.get("price"):
+            total += product["price"] * product.get("quantity", 1)
+    
+    update_data = {
+        "supplier_id": current_user.id,
+        "supplier_name": current_user.name,
+        "status": data.status,
+        "products": products,
+        "total": round(total, 2),
+        "price_confirmed": True,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    if data.assigned_to:
+        update_data["assigned_to"] = data.assigned_to
+    
+    await db.orders.update_one(
+        {"id": order_id},
+        {"$set": update_data}
+    )
+    
+    # Notificar al cliente
+    await create_notification(
+        order["client_id"],
+        f"El proveedor {current_user.name} ha tomado tu orden {order['order_number']} y agregado cotización"
     )
     
     updated = await db.orders.find_one({"id": order_id}, {"_id": 0})
