@@ -132,11 +132,25 @@ export default function ClienteHome() {
                 <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors" data-testid={`order-${order.order_number}`}>
                   <div>
                     <p className="font-medium font-mono">{order.order_number}</p>
-                    <p className="text-sm text-muted-foreground">{order.supplier_name}</p>
+                    {order.supplier_name ? (
+                      <p className="text-sm text-muted-foreground">{order.supplier_name}</p>
+                    ) : (
+                      <p className="text-sm text-amber-600 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        Esperando proveedor
+                      </p>
+                    )}
                     <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString('es-MX')}</p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">${order.total.toFixed(2)}</p>
+                    {isPriceVisible(order) ? (
+                      <p className="font-semibold">${order.total.toFixed(2)}</p>
+                    ) : (
+                      <p className="text-sm text-amber-600 flex items-center gap-1 justify-end">
+                        <AlertCircle className="h-3 w-3" />
+                        Por cotizar
+                      </p>
+                    )}
                     <span className={`status-badge status-${order.status}`}>{getStatusText(order.status)}</span>
                   </div>
                 </div>
