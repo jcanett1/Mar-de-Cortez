@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Search, User, Clock } from 'lucide-react';
+import { Search, User, Clock, AlertCircle } from 'lucide-react';
 
 export default function Seguimiento() {
   const [orders, setOrders] = useState([]);
@@ -21,7 +21,7 @@ export default function Seguimiento() {
       setFilteredOrders(
         orders.filter(order => 
           order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          order.supplier_name.toLowerCase().includes(searchTerm.toLowerCase())
+          (order.supplier_name && order.supplier_name.toLowerCase().includes(searchTerm.toLowerCase()))
         )
       );
     } else {
@@ -65,6 +65,11 @@ export default function Seguimiento() {
       cancelado: 'destructive'
     };
     return variantMap[status] || 'default';
+  };
+
+  // Verificar si los precios están confirmados (proveedor asignado y estado no pendiente)
+  const isPriceVisible = (order) => {
+    return order.price_confirmed || (order.supplier_id && order.status !== 'pendiente');
   };
 
   if (loading) {
@@ -116,11 +121,25 @@ export default function Seguimiento() {
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Proveedor</p>
-                        <p className="font-medium">{order.supplier_name}</p>
+                        {order.supplier_name ? (
+                          <p className="font-medium">{order.supplier_name}</p>
+                        ) : (
+                          <p className="text-amber-600 text-sm flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            Esperando proveedor
+                          </p>
+                        )}
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Total</p>
-                        <p className="font-semibold text-lg">${order.total.toFixed(2)}</p>
+                        {isPriceVisible(order) ? (
+                          <p className="font-semibold text-lg">${order.total.toFixed(2)}</p>
+                        ) : (
+                          <p className="text-amber-600 text-sm flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            Por cotizar
+                          </p>
+                        )}
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Estado</p>
@@ -164,8 +183,10 @@ export default function Seguimiento() {
                                   <span className="ml-2 text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded">Personalizado</span>
                                 )}
                               </span>
-                              {product.price && (
+                              {isPriceVisible(order) && product.price ? (
                                 <span className="font-medium">${(product.price * product.quantity).toFixed(2)}</span>
+                              ) : (
+                                <span className="text-amber-600 text-xs">Por cotizar</span>
                               )}
                             </div>
                             {product.description && (
@@ -175,6 +196,16 @@ export default function Seguimiento() {
                         ))}
                       </div>
                     </div>
+
+                    {/* Mensaje si aún no hay proveedor */}
+                    {!order.supplier_id && (
+                      <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <p className="text-sm text-amber-800 flex items-center gap-2">
+                          <AlertCircle className="h-4 w-4" />
+                          Tu orden está pendiente de asignación. Un proveedor la tomará pronto y te enviará la cotización.
+                        </p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}
